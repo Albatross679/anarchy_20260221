@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project
+output/
+model/
+.claude/
+
+# Data (large files)
+data/*.csv
+data/*.parquet
+data/*.zip
+data/*.gz
+!data/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/

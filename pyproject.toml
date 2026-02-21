@@ -1,0 +1,52 @@
+[project]
+name = "energy-investment-prioritization"
+version = "0.1.0"
+description = "AI-enabled decision tool for prioritizing building energy efficiency investments"
+requires-python = ">=3.10"
+dependencies = [
+    # Data
+    "numpy",
+    "pandas",
+    "pyarrow",
+
+    # ML / Stats
+    "scikit-learn",
+    "xgboost",
+    "lightgbm",
+    "scipy",
+    "statsmodels",
+
+    # Optimization
+    "pulp",
+
+    # Explainability
+    "shap",
+
+    # Visualization
+    "matplotlib",
+    "seaborn",
+    "plotly",
+
+    # Utilities
+    "tqdm",
+    "pyyaml",
+    "requests",
+
+    # Jupyter / notebook
+    "jupyter",
+    "ipywidgets",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
