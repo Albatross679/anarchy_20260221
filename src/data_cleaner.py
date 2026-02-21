@@ -1,19 +1,19 @@
 """
-Data cleaning pipeline for energy meter data.
+Data cleaning pipeline for smart meter data.
 
-Addresses four data integrity issues identified in the audit:
-1. GAS unit mismatch (~248k records in kWh instead of kg)
-2. Extreme outliers (readings >10^8 from sensor faults)
-3. Building metadata linkage gap (24% unmatched simscodes)
-4. Non-random missing data inflating STEAM under mean imputation
+Cleaning steps (executed in order):
+    1. drop_nan_simscode      -- remove rows with NaN join keys
+    2. exclude_utilities       -- drop OIL28SEC (100% zeros)
+    3. exclude_unmatched_buildings -- drop simscodes 8, 43, 93 (no metadata)
+    4. apply_hard_caps         -- drop sensor-fault outliers per utility
+    5. impute_short_gaps       -- ffill/bfill gaps up to 2 hours
 
-Functions are independently callable and return updated data + report fragments.
+Orchestrator:
+    clean_meter_data          -- runs all steps, returns (cleaned_df, report)
 """
 
-import warnings
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,8 +21,6 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-
-GAS_KWH_TO_KG = 1 / 29.3  # natural gas lower heating value conversion
 
 UTILITY_HARD_CAPS: Dict[str, float] = {
     "ELECTRICITY": 10_000,
@@ -33,18 +31,11 @@ UTILITY_HARD_CAPS: Dict[str, float] = {
     "HEAT": 10_000,
     "COOLING": 10_000,
     "COOLING_POWER": 10_000,
-    "OIL28SEC": 50_000,
 }
 
+EXCLUDED_UTILITIES = {"OIL28SEC"}
+EXCLUDED_SIMSCODES = {"8", "43", "93"}
 FFILL_GAP_LIMIT = 8  # 2 hours at 15-min intervals
-
-WINDOW_STAT_COLS = [
-    "readingwindowsum",
-    "readingwindowmean",
-    "readingwindowmin",
-    "readingwindowmax",
-    "readingwindowstandarddeviation",
-]
 
 
 # ---------------------------------------------------------------------------
@@ -54,62 +45,77 @@ WINDOW_STAT_COLS = [
 
 @dataclass
 class CleaningReport:
-    """Collects counts from every cleaning operation."""
-
-    gas_rows_converted: int = 0
+    rows_before: int = 0
+    rows_after: int = 0
+    nan_simscode_dropped: int = 0
+    excluded_utility_dropped: int = 0
+    excluded_buildings_dropped: int = 0
     outliers_removed: Dict[str, int] = field(default_factory=dict)
-    total_outliers_removed: int = 0
-    matched_direct: int = 0
-    matched_fuzzy: int = 0
-    unmatched_simscodes: int = 0
     intervals_filled: int = 0
-    gaps_too_long: int = 0
+    gaps_remaining: int = 0
+
+    @property
+    def total_outliers_removed(self) -> int:
+        return sum(self.outliers_removed.values())
 
     def summary(self) -> str:
-        lines = ["=== Data Cleaning Report ==="]
-        lines.append(f"GAS rows converted (kWh -> kg): {self.gas_rows_converted:,}")
-        lines.append(f"Outliers removed (total): {self.total_outliers_removed:,}")
+        lines = [
+            "=== Cleaning Report ===",
+            f"Rows before:              {self.rows_before:,}",
+            f"Rows after:               {self.rows_after:,}",
+            f"NaN simscode dropped:     {self.nan_simscode_dropped:,}",
+            f"Excluded utility dropped: {self.excluded_utility_dropped:,}",
+            f"Excluded buildings dropped:{self.excluded_buildings_dropped:,}",
+            f"Outliers removed (total): {self.total_outliers_removed:,}",
+        ]
         for util, count in sorted(self.outliers_removed.items()):
             lines.append(f"  {util}: {count:,}")
-        lines.append(f"Metadata linkage — direct: {self.matched_direct:,}, "
-                      f"fuzzy: {self.matched_fuzzy:,}, "
-                      f"unmatched: {self.unmatched_simscodes:,}")
-        lines.append(f"Intervals filled (ffill/bfill): {self.intervals_filled:,}")
-        lines.append(f"Gaps too long to fill: {self.gaps_too_long:,}")
+        lines.append(f"Intervals filled:         {self.intervals_filled:,}")
+        lines.append(f"Gaps remaining (NaN):     {self.gaps_remaining:,}")
         return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
-# 1. Fix GAS units
+# Step 1: Drop NaN simscode
 # ---------------------------------------------------------------------------
 
 
-def fix_gas_units(df: pd.DataFrame, report: CleaningReport) -> pd.DataFrame:
-    """Convert GAS rows where readingunits == 'kWh' from kWh to kg.
-
-    Also scales window stats columns. Checks both utility AND unit to avoid
-    double-conversion.
-    """
-    df = df.copy()
-
-    mask = (df["utility"] == "GAS") & (df["readingunits"] == "kWh")
-    n_converted = mask.sum()
-
-    if n_converted > 0:
-        df.loc[mask, "readingvalue"] *= GAS_KWH_TO_KG
-
-        for col in WINDOW_STAT_COLS:
-            if col in df.columns:
-                df.loc[mask, col] *= GAS_KWH_TO_KG
-
-        df.loc[mask, "readingunits"] = "kg"
-
-    report.gas_rows_converted = int(n_converted)
+def drop_nan_simscode(df: pd.DataFrame, report: CleaningReport) -> pd.DataFrame:
+    """Drop rows where simscode is NaN, cast remainder to int->str."""
+    mask = df["simscode"].isna()
+    report.nan_simscode_dropped = int(mask.sum())
+    df = df[~mask].copy()
+    # Clean join key: float -> int -> str (avoids "338.0")
+    df["simscode"] = df["simscode"].astype(float).astype(int).astype(str)
     return df
 
 
 # ---------------------------------------------------------------------------
-# 2. Apply hard caps
+# Step 2: Exclude utilities
+# ---------------------------------------------------------------------------
+
+
+def exclude_utilities(df: pd.DataFrame, report: CleaningReport) -> pd.DataFrame:
+    """Drop all rows for utilities in EXCLUDED_UTILITIES."""
+    mask = df["utility"].isin(EXCLUDED_UTILITIES)
+    report.excluded_utility_dropped = int(mask.sum())
+    return df[~mask].copy()
+
+
+# ---------------------------------------------------------------------------
+# Step 3: Exclude unmatched buildings
+# ---------------------------------------------------------------------------
+
+
+def exclude_unmatched_buildings(df: pd.DataFrame, report: CleaningReport) -> pd.DataFrame:
+    """Drop rows for simscodes with no building metadata."""
+    mask = df["simscode"].isin(EXCLUDED_SIMSCODES)
+    report.excluded_buildings_dropped = int(mask.sum())
+    return df[~mask].copy()
+
+
+# ---------------------------------------------------------------------------
+# Step 4: Apply hard caps
 # ---------------------------------------------------------------------------
 
 
@@ -120,273 +126,84 @@ def apply_hard_caps(
 ) -> pd.DataFrame:
     """Drop rows where readingvalue exceeds per-utility hard cap.
 
-    Values >10^8 are sensor faults, not outliers — drop, don't clip.
+    Unknown utilities (not in caps dict) are left untouched.
     """
-    caps = caps if caps is not None else UTILITY_HARD_CAPS
-    df = df.copy()
+    if caps is None:
+        caps = UTILITY_HARD_CAPS
 
-    total_removed = 0
+    keep_mask = pd.Series(True, index=df.index)
+
     for utility, cap in caps.items():
-        over_mask = (df["utility"] == utility) & (df["readingvalue"] > cap)
-        n_over = over_mask.sum()
-        if n_over > 0:
-            report.outliers_removed[utility] = int(n_over)
-            total_removed += n_over
-            df = df[~over_mask]
+        util_mask = df["utility"] == utility
+        over_cap = util_mask & (df["readingvalue"] > cap)
+        n_removed = int(over_cap.sum())
+        if n_removed > 0:
+            report.outliers_removed[utility] = n_removed
+            keep_mask &= ~over_cap
 
-    report.total_outliers_removed = int(total_removed)
-    return df
-
-
-# ---------------------------------------------------------------------------
-# 3. Build site lookup (fuzzy matching)
-# ---------------------------------------------------------------------------
-
-
-def _fuzzy_score(a: str, b: str) -> float:
-    """Score similarity between two strings, using rapidfuzz if available."""
-    try:
-        from rapidfuzz.fuzz import token_set_ratio
-        return token_set_ratio(a, b)
-    except ImportError:
-        from difflib import SequenceMatcher
-        return SequenceMatcher(None, a.lower(), b.lower()).ratio() * 100
-
-
-def build_site_lookup(
-    meter_df: pd.DataFrame,
-    building_df: pd.DataFrame,
-    threshold: float = 80.0,
-) -> pd.DataFrame:
-    """Generate a candidate simscode -> buildingnumber mapping table.
-
-    Matching strategies:
-    1. Direct match: simscode == buildingnumber
-    2. Fuzzy name match: sitename ~ buildingname via token_set_ratio
-    """
-    # Get unique meter sites
-    sites = meter_df[["simscode", "sitename"]].drop_duplicates("simscode").copy()
-    sites["simscode"] = sites["simscode"].astype(str).str.strip()
-    sites["sitename"] = sites["sitename"].astype(str).str.strip()
-
-    buildings = building_df[["buildingnumber", "buildingname"]].copy()
-    buildings["buildingnumber"] = buildings["buildingnumber"].astype(str).str.strip()
-    buildings["buildingname"] = buildings["buildingname"].astype(str).str.strip()
-
-    building_numbers = set(buildings["buildingnumber"])
-
-    rows = []
-    for _, site in sites.iterrows():
-        sc = site["simscode"]
-        sn = site["sitename"]
-
-        # Try direct match first
-        if sc in building_numbers:
-            bldg = buildings[buildings["buildingnumber"] == sc].iloc[0]
-            rows.append({
-                "simscode": sc,
-                "sitename": sn,
-                "buildingnumber": sc,
-                "buildingname": bldg["buildingname"],
-                "match_type": "direct",
-                "fuzzy_score": 100.0,
-            })
-            continue
-
-        # Try fuzzy name match
-        best_score = 0.0
-        best_match = None
-        for _, bldg in buildings.iterrows():
-            score = _fuzzy_score(sn, bldg["buildingname"])
-            if score > best_score:
-                best_score = score
-                best_match = bldg
-
-        if best_match is not None and best_score >= threshold:
-            rows.append({
-                "simscode": sc,
-                "sitename": sn,
-                "buildingnumber": best_match["buildingnumber"],
-                "buildingname": best_match["buildingname"],
-                "match_type": "fuzzy",
-                "fuzzy_score": best_score,
-            })
-        else:
-            rows.append({
-                "simscode": sc,
-                "sitename": sn,
-                "buildingnumber": None,
-                "buildingname": None,
-                "match_type": "unmatched",
-                "fuzzy_score": best_score if best_match is not None else 0.0,
-            })
-
-    return pd.DataFrame(rows)
+    return df[keep_mask].copy()
 
 
 # ---------------------------------------------------------------------------
-# 4. Load or create site lookup
+# Step 5: Impute short gaps
 # ---------------------------------------------------------------------------
 
 
-def load_or_create_site_lookup(
-    meter_df: pd.DataFrame,
-    building_df: pd.DataFrame,
-    path: str = "data/site_to_building_lookup.csv",
-    threshold: float = 80.0,
-) -> pd.DataFrame:
-    """Load existing lookup CSV or create one via build_site_lookup."""
-    p = Path(path)
-    if p.exists():
-        lookup = pd.read_csv(p, dtype=str)
-        # Ensure score is float
-        if "fuzzy_score" in lookup.columns:
-            lookup["fuzzy_score"] = pd.to_numeric(lookup["fuzzy_score"], errors="coerce")
-        return lookup
-
-    warnings.warn(
-        f"No site lookup found at {path}. Generating one — please review "
-        f"and commit the file before production use.",
-        stacklevel=2,
-    )
-    lookup = build_site_lookup(meter_df, building_df, threshold=threshold)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    lookup.to_csv(p, index=False)
-    return lookup
-
-
-# ---------------------------------------------------------------------------
-# 5. Apply metadata linkage
-# ---------------------------------------------------------------------------
-
-
-def apply_metadata_linkage(
-    meter_df: pd.DataFrame,
-    building_df: pd.DataFrame,
-    lookup_df: pd.DataFrame,
-    report: CleaningReport,
-) -> pd.DataFrame:
-    """Add resolved_buildingnumber column to meter_df using lookup table.
-
-    Does NOT drop unmatched rows — that happens at the inner join in
-    build_feature_matrix.
-    """
-    meter_df = meter_df.copy()
-
-    # Build mapping from lookup (only matched entries)
-    matched = lookup_df[lookup_df["match_type"] != "unmatched"].copy()
-    mapping = dict(zip(matched["simscode"], matched["buildingnumber"]))
-
-    meter_df["simscode_str"] = meter_df["simscode"].astype(str).str.strip()
-    meter_df["resolved_buildingnumber"] = meter_df["simscode_str"].map(mapping)
-
-    n_direct = int(lookup_df["match_type"].eq("direct").sum())
-    n_fuzzy = int(lookup_df["match_type"].eq("fuzzy").sum())
-    n_unmatched = int(lookup_df["match_type"].eq("unmatched").sum())
-
-    report.matched_direct = n_direct
-    report.matched_fuzzy = n_fuzzy
-    report.unmatched_simscodes = n_unmatched
-
-    # Log unmatched simscodes
-    unmatched_codes = meter_df.loc[
-        meter_df["resolved_buildingnumber"].isna(), "simscode_str"
-    ].unique()
-    if len(unmatched_codes) > 0:
-        warnings.warn(
-            f"{len(unmatched_codes)} simscodes have no building match: "
-            f"{list(unmatched_codes[:10])}{'...' if len(unmatched_codes) > 10 else ''}",
-            stacklevel=2,
-        )
-
-    meter_df.drop(columns=["simscode_str"], inplace=True)
-    return meter_df
-
-
-# ---------------------------------------------------------------------------
-# 6. Impute missing intervals
-# ---------------------------------------------------------------------------
-
-
-def impute_missing_intervals(
+def impute_short_gaps(
     df: pd.DataFrame,
     report: CleaningReport,
     gap_limit: int = FFILL_GAP_LIMIT,
 ) -> pd.DataFrame:
-    """Per-meter ffill then bfill on readingvalue, respecting gap limits.
+    """Fill short NaN gaps in readingvalue via ffill + bfill within meter groups.
 
-    Groups by (meterid, simscode, utility) to avoid filling across meter
-    boundaries. Gaps longer than gap_limit remain NaN.
+    Gaps longer than gap_limit intervals remain NaN.
     """
-    df = df.copy()
+    nans_before = int(df["readingvalue"].isna().sum())
 
-    # Determine grouping columns (use what's available)
-    group_cols = [c for c in ["meterid", "simscode", "utility"] if c in df.columns]
-    if not group_cols:
-        group_cols = ["simscode"]
+    df = df.sort_values(["meterid", "simscode", "utility", "readingtime"]).copy()
+    group_cols = ["meterid", "simscode", "utility"]
 
-    na_before = int(df["readingvalue"].isna().sum())
+    df["readingvalue"] = (
+        df.groupby(group_cols)["readingvalue"]
+        .transform(lambda s: s.ffill(limit=gap_limit).bfill(limit=gap_limit))
+    )
 
-    if na_before == 0:
-        return df
-
-    # Sort for fill correctness
-    df = df.sort_values(group_cols + ["readingtime"])
-
-    def _fill_group(g):
-        g = g.copy()
-        g["readingvalue"] = (
-            g["readingvalue"]
-            .ffill(limit=gap_limit)
-            .bfill(limit=gap_limit)
-        )
-        return g
-
-    df = df.groupby(group_cols, group_keys=False).apply(_fill_group)
-
-    na_after = int(df["readingvalue"].isna().sum())
-    report.intervals_filled = na_before - na_after
-    report.gaps_too_long = na_after
-
+    nans_after = int(df["readingvalue"].isna().sum())
+    report.intervals_filled = nans_before - nans_after
+    report.gaps_remaining = nans_after
     return df
 
 
 # ---------------------------------------------------------------------------
-# 7. Top-level orchestrator
+# Orchestrator
 # ---------------------------------------------------------------------------
 
 
 def clean_meter_data(
     df: pd.DataFrame,
     building_df: pd.DataFrame,
-    lookup_path: str = "data/site_to_building_lookup.csv",
+    lookup_path: Optional[str] = None,
     fuzzy_threshold: float = 80.0,
     gap_limit: int = FFILL_GAP_LIMIT,
     caps: Optional[Dict[str, float]] = None,
-) -> Tuple[pd.DataFrame, CleaningReport]:
-    """Run all cleaning steps in the correct order.
+):
+    """Run all cleaning steps in order.
 
-    Order matters: unit fix MUST precede hard caps because GAS values in kWh
-    are ~29x larger than in kg.
+    Parameters match what data_loader.build_feature_matrix expects.
+    building_df, lookup_path, and fuzzy_threshold are accepted for interface
+    compatibility but unused (building filtering is handled by the loader).
 
-    Returns (cleaned_df, CleaningReport).
+    Returns:
+        (cleaned_df, CleaningReport)
     """
     report = CleaningReport()
+    report.rows_before = len(df)
 
-    # Step 1: Fix GAS units (before caps!)
-    df = fix_gas_units(df, report)
-
-    # Step 2: Apply hard caps
+    df = drop_nan_simscode(df, report)
+    df = exclude_utilities(df, report)
+    df = exclude_unmatched_buildings(df, report)
     df = apply_hard_caps(df, report, caps=caps)
+    df = impute_short_gaps(df, report, gap_limit=gap_limit)
 
-    # Step 3-5: Metadata linkage
-    lookup_df = load_or_create_site_lookup(
-        df, building_df, path=lookup_path, threshold=fuzzy_threshold,
-    )
-    df = apply_metadata_linkage(df, building_df, lookup_df, report)
-
-    # Step 6: Impute missing intervals
-    df = impute_missing_intervals(df, report, gap_limit=gap_limit)
-
-    print(report.summary())
+    report.rows_after = len(df)
     return df, report

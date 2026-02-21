@@ -5,14 +5,15 @@ import numpy as np
 import pytest
 
 from src.data_cleaner import (
-    GAS_KWH_TO_KG,
     UTILITY_HARD_CAPS,
+    EXCLUDED_UTILITIES,
+    EXCLUDED_SIMSCODES,
     CleaningReport,
-    fix_gas_units,
+    drop_nan_simscode,
+    exclude_utilities,
+    exclude_unmatched_buildings,
     apply_hard_caps,
-    build_site_lookup,
-    apply_metadata_linkage,
-    impute_missing_intervals,
+    impute_short_gaps,
     clean_meter_data,
 )
 
@@ -48,78 +49,110 @@ def _make_building_df(**overrides):
 
 
 # ---------------------------------------------------------------------------
-# TestFixGasUnits
+# TestDropNanSimscode
 # ---------------------------------------------------------------------------
 
-class TestFixGasUnits:
-    def test_converts_gas_kwh_to_kg(self):
-        """GAS rows with kWh units should be converted to kg."""
+class TestDropNanSimscode:
+    def test_nan_rows_removed(self):
+        """Rows with NaN simscode should be dropped."""
         df = _make_meter_df(
-            utility=["GAS"],
-            readingvalue=[29.3],  # 29.3 kWh = 1 kg
-            readingunits=["kWh"],
+            simscode=[100, np.nan, 200],
+            meterid=["M1", "M2", "M3"],
+            sitename=["A", "B", "C"],
+            utility=["ELECTRICITY"] * 3,
+            readingtime=pd.to_datetime(["2025-09-01"] * 3),
+            readingvalue=[10.0, 20.0, 30.0],
+            readingunits=["kWh"] * 3,
         )
         report = CleaningReport()
-        result = fix_gas_units(df, report)
+        result = drop_nan_simscode(df, report)
 
-        assert report.gas_rows_converted == 1
-        assert abs(result["readingvalue"].iloc[0] - 1.0) < 1e-6
-        assert result["readingunits"].iloc[0] == "kg"
+        assert len(result) == 2
+        assert report.nan_simscode_dropped == 1
 
-    def test_steam_unchanged(self):
-        """Non-GAS utilities should not be modified."""
+    def test_valid_rows_kept(self):
+        """All rows kept when no NaN simscodes."""
+        df = _make_meter_df(simscode=[100])
+        report = CleaningReport()
+        result = drop_nan_simscode(df, report)
+
+        assert len(result) == 1
+        assert report.nan_simscode_dropped == 0
+
+    def test_simscode_cast_to_str(self):
+        """simscode should be cast to str after dropping NaN."""
+        df = _make_meter_df(simscode=[338.0])
+        report = CleaningReport()
+        result = drop_nan_simscode(df, report)
+
+        assert result["simscode"].iloc[0] == "338"
+        assert result["simscode"].dtype == object
+
+
+# ---------------------------------------------------------------------------
+# TestExcludeUtilities
+# ---------------------------------------------------------------------------
+
+class TestExcludeUtilities:
+    def test_oil28sec_dropped(self):
+        """OIL28SEC rows should be removed."""
         df = _make_meter_df(
-            utility=["STEAM"],
-            readingvalue=[100.0],
-            readingunits=["kWh"],
+            utility=["ELECTRICITY", "OIL28SEC"],
+            meterid=["M1", "M2"],
+            simscode=["100", "200"],
+            sitename=["A", "B"],
+            readingtime=pd.to_datetime(["2025-09-01"] * 2),
+            readingvalue=[10.0, 0.0],
+            readingunits=["kWh", "gal"],
         )
         report = CleaningReport()
-        result = fix_gas_units(df, report)
+        result = exclude_utilities(df, report)
 
-        assert report.gas_rows_converted == 0
-        assert result["readingvalue"].iloc[0] == 100.0
+        assert len(result) == 1
+        assert report.excluded_utility_dropped == 1
+        assert result["utility"].iloc[0] == "ELECTRICITY"
 
-    def test_no_double_convert(self):
-        """GAS rows already in kg should not be converted again."""
+    def test_other_utilities_kept(self):
+        """Non-excluded utilities should be retained."""
+        df = _make_meter_df(utility=["GAS"])
+        report = CleaningReport()
+        result = exclude_utilities(df, report)
+
+        assert len(result) == 1
+        assert report.excluded_utility_dropped == 0
+
+
+# ---------------------------------------------------------------------------
+# TestExcludeUnmatchedBuildings
+# ---------------------------------------------------------------------------
+
+class TestExcludeUnmatchedBuildings:
+    def test_excluded_simscodes_dropped(self):
+        """simscodes 8, 43, 93 should be dropped."""
         df = _make_meter_df(
-            utility=["GAS"],
-            readingvalue=[1.0],
-            readingunits=["kg"],
+            simscode=["8", "43", "93", "100"],
+            meterid=["M1", "M2", "M3", "M4"],
+            sitename=["A", "B", "C", "D"],
+            utility=["ELECTRICITY"] * 4,
+            readingtime=pd.to_datetime(["2025-09-01"] * 4),
+            readingvalue=[10.0, 20.0, 30.0, 40.0],
+            readingunits=["kWh"] * 4,
         )
         report = CleaningReport()
-        result = fix_gas_units(df, report)
+        result = exclude_unmatched_buildings(df, report)
 
-        assert report.gas_rows_converted == 0
-        assert result["readingvalue"].iloc[0] == 1.0
+        assert len(result) == 1
+        assert result["simscode"].iloc[0] == "100"
+        assert report.excluded_buildings_dropped == 3
 
-    def test_window_stats_scaled(self):
-        """Window stat columns should be scaled by the same factor."""
-        df = _make_meter_df(
-            utility=["GAS"],
-            readingvalue=[29.3],
-            readingunits=["kWh"],
-        )
-        df["readingwindowsum"] = [293.0]
-        df["readingwindowmean"] = [29.3]
-
+    def test_valid_simscodes_kept(self):
+        """simscodes not in the exclusion set should be retained."""
+        df = _make_meter_df(simscode=["100"])
         report = CleaningReport()
-        result = fix_gas_units(df, report)
+        result = exclude_unmatched_buildings(df, report)
 
-        assert abs(result["readingwindowsum"].iloc[0] - 10.0) < 1e-4
-        assert abs(result["readingwindowmean"].iloc[0] - 1.0) < 1e-6
-
-    def test_input_not_mutated(self):
-        """Original DataFrame should not be modified."""
-        df = _make_meter_df(
-            utility=["GAS"],
-            readingvalue=[29.3],
-            readingunits=["kWh"],
-        )
-        original_value = df["readingvalue"].iloc[0]
-        report = CleaningReport()
-        fix_gas_units(df, report)
-
-        assert df["readingvalue"].iloc[0] == original_value
+        assert len(result) == 1
+        assert report.excluded_buildings_dropped == 0
 
 
 # ---------------------------------------------------------------------------
@@ -193,119 +226,10 @@ class TestApplyHardCaps:
 
 
 # ---------------------------------------------------------------------------
-# TestBuildSiteLookup
+# TestImputeShortGaps
 # ---------------------------------------------------------------------------
 
-class TestBuildSiteLookup:
-    def test_direct_match_found(self):
-        """simscode matching buildingnumber should be a direct match."""
-        meter_df = _make_meter_df(simscode=["100"], sitename=["Foo Hall"])
-        building_df = _make_building_df(buildingnumber=["100"], buildingname=["Foo Hall"])
-
-        lookup = build_site_lookup(meter_df, building_df)
-        assert len(lookup) == 1
-        assert lookup["match_type"].iloc[0] == "direct"
-        assert lookup["buildingnumber"].iloc[0] == "100"
-
-    def test_unmatched_recorded(self):
-        """simscode with no matching buildingnumber should be unmatched."""
-        meter_df = _make_meter_df(simscode=["999"], sitename=["Nowhere"])
-        building_df = _make_building_df(
-            buildingnumber=["100"], buildingname=["Completely Different"]
-        )
-
-        lookup = build_site_lookup(meter_df, building_df, threshold=95.0)
-        assert len(lookup) == 1
-        assert lookup["match_type"].iloc[0] == "unmatched"
-
-    def test_fuzzy_match(self):
-        """Similar names should produce a fuzzy match above threshold."""
-        meter_df = _make_meter_df(simscode=["999"], sitename=["Science Hall West"])
-        building_df = _make_building_df(
-            buildingnumber=["200"], buildingname=["Science Hall West Wing"]
-        )
-
-        lookup = build_site_lookup(meter_df, building_df, threshold=50.0)
-        assert len(lookup) == 1
-        assert lookup["match_type"].iloc[0] == "fuzzy"
-        assert lookup["buildingnumber"].iloc[0] == "200"
-
-
-# ---------------------------------------------------------------------------
-# TestApplyMetadataLinkage
-# ---------------------------------------------------------------------------
-
-class TestApplyMetadataLinkage:
-    def test_resolved_column_added(self):
-        """Should add resolved_buildingnumber from lookup."""
-        meter_df = _make_meter_df(simscode=["100"])
-        building_df = _make_building_df()
-        lookup_df = pd.DataFrame({
-            "simscode": ["100"],
-            "sitename": ["Test"],
-            "buildingnumber": ["100"],
-            "buildingname": ["Test Building"],
-            "match_type": ["direct"],
-            "fuzzy_score": [100.0],
-        })
-        report = CleaningReport()
-        result = apply_metadata_linkage(meter_df, building_df, lookup_df, report)
-
-        assert "resolved_buildingnumber" in result.columns
-        assert result["resolved_buildingnumber"].iloc[0] == "100"
-        assert report.matched_direct == 1
-
-    def test_unmatched_rows_have_nan(self):
-        """Unmatched simscodes should have NaN in resolved_buildingnumber."""
-        meter_df = _make_meter_df(simscode=["999"])
-        building_df = _make_building_df()
-        lookup_df = pd.DataFrame({
-            "simscode": ["999"],
-            "sitename": ["Unknown"],
-            "buildingnumber": [None],
-            "buildingname": [None],
-            "match_type": ["unmatched"],
-            "fuzzy_score": [0.0],
-        })
-        report = CleaningReport()
-        result = apply_metadata_linkage(meter_df, building_df, lookup_df, report)
-
-        assert pd.isna(result["resolved_buildingnumber"].iloc[0])
-        assert report.unmatched_simscodes == 1
-
-    def test_report_counts(self):
-        """Report should count direct, fuzzy, and unmatched separately."""
-        meter_df = pd.DataFrame({
-            "meterid": ["M1", "M2", "M3"],
-            "simscode": ["100", "200", "300"],
-            "sitename": ["A", "B", "C"],
-            "utility": ["ELECTRICITY"] * 3,
-            "readingtime": pd.to_datetime(["2025-09-01"] * 3),
-            "readingvalue": [10.0, 20.0, 30.0],
-            "readingunits": ["kWh"] * 3,
-        })
-        building_df = _make_building_df()
-        lookup_df = pd.DataFrame({
-            "simscode": ["100", "200", "300"],
-            "sitename": ["A", "B", "C"],
-            "buildingnumber": ["100", "200", None],
-            "buildingname": ["A", "B", None],
-            "match_type": ["direct", "fuzzy", "unmatched"],
-            "fuzzy_score": [100.0, 85.0, 30.0],
-        })
-        report = CleaningReport()
-        apply_metadata_linkage(meter_df, building_df, lookup_df, report)
-
-        assert report.matched_direct == 1
-        assert report.matched_fuzzy == 1
-        assert report.unmatched_simscodes == 1
-
-
-# ---------------------------------------------------------------------------
-# TestImputeMissingIntervals
-# ---------------------------------------------------------------------------
-
-class TestImputeMissingIntervals:
+class TestImputeShortGaps:
     def test_short_gap_filled(self):
         """Gaps <= gap_limit should be filled."""
         times = pd.date_range("2025-09-01", periods=5, freq="15min")
@@ -317,7 +241,7 @@ class TestImputeMissingIntervals:
             "readingvalue": [10.0, np.nan, np.nan, np.nan, 20.0],
         })
         report = CleaningReport()
-        result = impute_missing_intervals(df, report, gap_limit=4)
+        result = impute_short_gaps(df, report, gap_limit=4)
 
         assert result["readingvalue"].isna().sum() == 0
         assert report.intervals_filled == 3
@@ -334,12 +258,12 @@ class TestImputeMissingIntervals:
             "readingvalue": values,
         })
         report = CleaningReport()
-        result = impute_missing_intervals(df, report, gap_limit=4)
+        result = impute_short_gaps(df, report, gap_limit=4)
 
         # With gap_limit=4, ffill fills 4 from the left, bfill fills 4 from the right
         # Middle values (2 of them) stay NaN
         assert result["readingvalue"].isna().sum() > 0
-        assert report.gaps_too_long > 0
+        assert report.gaps_remaining > 0
 
     def test_no_fill_across_meters(self):
         """Values should not fill across different meter groups."""
@@ -352,7 +276,7 @@ class TestImputeMissingIntervals:
             "readingvalue": [10.0, np.nan],
         })
         report = CleaningReport()
-        result = impute_missing_intervals(df, report, gap_limit=4)
+        result = impute_short_gaps(df, report, gap_limit=4)
 
         # M2 has no prior value in its group, so it should remain NaN
         m2_row = result[result["meterid"] == "M2"]
@@ -362,7 +286,7 @@ class TestImputeMissingIntervals:
         """No changes when there are no NaN values."""
         df = _make_meter_df(readingvalue=[10.0])
         report = CleaningReport()
-        result = impute_missing_intervals(df, report)
+        result = impute_short_gaps(df, report)
 
         assert len(result) == 1
         assert report.intervals_filled == 0
@@ -373,44 +297,42 @@ class TestImputeMissingIntervals:
 # ---------------------------------------------------------------------------
 
 class TestCleanMeterData:
-    def test_full_pipeline(self, tmp_path):
+    def test_full_pipeline(self):
         """Integration test: all cleaning steps run in sequence."""
-        # Create meter data with issues
         meter_df = pd.DataFrame({
-            "meterid": ["M1", "M2", "M3", "M4"],
-            "simscode": ["100", "100", "200", "300"],
-            "sitename": ["Test Bldg", "Test Bldg", "Other Bldg", "Unknown"],
-            "utility": ["GAS", "ELECTRICITY", "ELECTRICITY", "ELECTRICITY"],
-            "readingtime": pd.to_datetime([
-                "2025-09-01 00:00", "2025-09-01 00:00",
-                "2025-09-01 00:00", "2025-09-01 00:00",
-            ]),
-            "readingvalue": [29.3, 1e10, 50.0, 100.0],  # GAS in kWh, extreme outlier
-            "readingunits": ["kWh", "kWh", "kWh", "kWh"],
+            "meterid": ["M1", "M2", "M3", "M4", "M5"],
+            "simscode": [100, 100, 200, np.nan, 8],
+            "sitename": ["Bldg A", "Bldg A", "Bldg B", "Unknown", "No Meta"],
+            "utility": ["GAS", "ELECTRICITY", "ELECTRICITY", "ELECTRICITY", "ELECTRICITY"],
+            "readingtime": pd.to_datetime(["2025-09-01 00:00"] * 5),
+            "readingvalue": [29.3, 1e10, 50.0, 100.0, 75.0],
+            "readingunits": ["kWh", "kWh", "kWh", "kWh", "kWh"],
         })
 
         building_df = _make_building_df(
             buildingnumber=["100", "200"],
-            buildingname=["Test Bldg", "Other Bldg"],
+            buildingname=["Bldg A", "Bldg B"],
             grossarea=[10000.0, 5000.0],
         )
 
-        lookup_path = str(tmp_path / "lookup.csv")
-        cleaned, report = clean_meter_data(
-            meter_df, building_df, lookup_path=lookup_path
-        )
+        cleaned, report = clean_meter_data(meter_df, building_df)
 
-        # GAS should be converted
-        assert report.gas_rows_converted == 1
-
+        # NaN simscode row should be dropped
+        assert report.nan_simscode_dropped == 1
+        # Excluded building (simscode 8) should be dropped
+        assert report.excluded_buildings_dropped == 1
         # Extreme outlier (1e10 ELECTRICITY) should be removed
         assert report.total_outliers_removed >= 1
-
-        # Lookup file should be created
-        assert (tmp_path / "lookup.csv").exists()
-
-        # resolved_buildingnumber should exist
-        assert "resolved_buildingnumber" in cleaned.columns
-
-        # Result should have fewer rows than input (outlier removed)
+        # Fewer rows than input
         assert len(cleaned) < len(meter_df)
+        assert report.rows_before == 5
+        assert report.rows_after == len(cleaned)
+
+    def test_report_populated(self):
+        """Report should have correct rows_before and rows_after."""
+        df = _make_meter_df(simscode=[100])
+        building_df = _make_building_df()
+        cleaned, report = clean_meter_data(df, building_df)
+
+        assert report.rows_before == 1
+        assert report.rows_after == 1
