@@ -46,7 +46,8 @@ src/
 - `data/` — energy meter CSVs, weather data, building metadata
 - `output/` — generated rankings, reports, plots
 - `model/` — saved model weights
-- `doc/` — info packet and challenge documentation
+- `doc/` — info packet, challenge documentation, and model specs
+  - `doc/CNN_MODEL.md` — CNN model input/output specification
 
 ## Data Schema
 
