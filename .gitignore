@@ -24,10 +24,7 @@ output/
 model/
 .claude/
 
-# Data (large files)
-data/*.csv
-data/*.parquet
-data/*.zip
+# Data (large files tracked via Git LFS)
 data/*.gz
 !data/.gitkeep
 
