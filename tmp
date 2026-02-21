@@ -1,0 +1,83 @@
+Strategic Energy Investment Prioritization Challenge In this challenge, teams will use campus energy meter data, weather information, and building metadata to develop an AI-enabled decision tool that helps prioritize which buildings should receive energy efficiency investments. Rather than diagnosing equipment issues, the goal is to analyze performance across buildings, identify inefficiencies or anomalies, and produce clear, explainable rankings that support data-driven sustainability and capital planning decisions.
+
+# Mathematical Formulation
+
+## 1. Sets and Indices
+
+- **B = {1, ..., N}**: set of buildings
+- **T = {1, ..., T}**: time periods (meter readings)
+- **F ⊆ B**: subset selected for investment, |F| ≤ K (budget constraint)
+
+
+## 2. Data / Observed Quantities
+
+| Symbol  | Meaning                                                              |
+|---------|----------------------------------------------------------------------|
+| e_{b,t} | Energy consumption of building b at time t                           |
+| w_t     | Weather feature vector at time t (temperature, humidity, solar irradiance, ...) |
+| m_b     | Building metadata vector (sqft, age, type, HVAC system, occupancy, ...) |
+
+
+## 3. Core Modeling: Expected vs. Actual Consumption
+
+Fit a predictive model for "normal" consumption conditioned on context:
+
+    ê_{b,t} = f_θ(w_t, m_b, t)
+
+The inefficiency signal for each building-time pair:
+
+    δ_{b,t} = e_{b,t} - ê_{b,t}
+
+
+## 4. Building-Level Scoring
+
+Aggregate into a per-building inefficiency score s_b. Several options:
+
+**Mean excess:**
+
+    s_b = (1/T) * Σ_{t=1}^{T} δ_{b,t}
+
+**Tail behavior (emphasize large deviations):**
+
+    s_b = (1/|T_b⁺|) * Σ_{t ∈ T_b⁺} δ_{b,t},    where T_b⁺ = {t : δ_{b,t} > τ}
+
+**Normalized by building size:**
+
+    s̃_b = s_b / A_b    where A_b is floor area
+
+
+## 5. Anomaly Detection Layer
+
+Flag building b as anomalous if:
+
+    (s_b - μ_s) / σ_s > z_α
+
+Or via isolation forest / autoencoder reconstruction error.
+
+
+## 6. Optimization: Investment Prioritization
+
+Given per-building investment cost c_b, estimated savings Δ_b(s_b), and total budget B:
+
+    max_{x ∈ {0,1}^N}  Σ_{b=1}^{N} Δ_b * x_b
+
+    s.t.  Σ_{b=1}^{N} c_b * x_b ≤ B
+
+This is a **0-1 knapsack problem**. If costs are uniform, it reduces to sorting by Δ_b (or equivalently s_b) and selecting the top K.
+
+
+## 7. Multi-Objective Extension
+
+If explainability and equity matter, use a weighted ranking:
+
+    r_b = α_1 * s̃_b + α_2 * a_b + α_3 * g_b
+
+Where:
+- a_b = anomaly score
+- g_b = building age or equity priority
+- α = stakeholder-tunable weights
+
+
+## 8. Summary Pipeline
+
+    Raw data → f_θ → ê_{b,t} → δ_{b,t} → s_b → rank / knapsack → F* ⊆ B

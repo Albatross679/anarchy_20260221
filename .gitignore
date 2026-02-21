@@ -22,7 +22,7 @@ Thumbs.db
 # Project
 output/
 model/
-.claude/
+# .claude/
 
 # Data (large files tracked via Git LFS)
 data/*.gz
