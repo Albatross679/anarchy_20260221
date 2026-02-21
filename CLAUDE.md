@@ -4,9 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hackathon project: Strategic Energy Investment Prioritization. Builds an AI-enabled decision tool that analyzes campus building energy meter data, weather, and building metadata to rank buildings for energy efficiency investment.
+OSU AI Hackathon — **Team Anarchy**. Strategic Energy Investment Prioritization: an AI-enabled decision tool that analyzes ~60 days of campus building energy meter data, weather, and building metadata to rank buildings for energy efficiency investment.
 
-**Pipeline**: Raw data -> predictive model -> residuals (actual - expected) -> building-level scores -> ranking/knapsack optimization -> investment set
+**Pipeline**: Raw data -> predictive model -> residuals (actual - expected) -> building-level scores -> ranking/optimization -> investment shortlist (top 5-10 buildings)
+
+## Deliverables
+
+1. **Decision-support artifact** — interactive dashboard or ranking tool for non-technical decision-makers
+2. **AI/model reasoning layer** — regression/ML model applied consistently across all buildings
+3. **Investment signals** — multiple data-derived signals with explainable weighting
+4. **Explainability** — per-building evidence, uncertainty/confidence, stated limitations
+5. **Action framing** — next steps, scalability reflection
 
 ## Commands
 
@@ -38,11 +46,42 @@ src/
 - `data/` — energy meter CSVs, weather data, building metadata
 - `output/` — generated rankings, reports, plots
 - `model/` — saved model weights
+- `doc/` — info packet and challenge documentation
 
-## Key Mathematical Details
+## Data Schema
 
-- Inefficiency residual: `δ_{b,t} = e_{b,t} - ê_{b,t}`
-- Building score options: mean excess, tail behavior (above threshold τ), normalized by floor area
-- Anomaly flagging: `(s_b - μ_s) / σ_s > z_α`
-- Investment optimization: maximize `Σ Δ_b * x_b` subject to `Σ c_b * x_b ≤ B` (knapsack)
-- Multi-objective ranking: `r_b = α₁·s̃_b + α₂·a_b + α₃·g_b` with stakeholder-tunable weights
+### Smart Meter Data (CSV, 15-min intervals, ~60 days from 2025)
+- Join key: `simsCode` (links to building metadata `buildingNumber`)
+- Key fields: `meterId`, `siteName`, `simsCode`, `utility`, `readingTime`, `readingValue`, `readingUnits`
+- Rolling 24h window stats: `readingWindowSum`, `readingWindowMin`, `readingWindowMax`, `readingWindowMean`, `readingWindowStandardDeviation`
+- `readingValue` is per-interval (not cumulative) — sum intervals for daily/monthly totals
+- Utilities: ELECTRICITY, ELECTRICAL_POWER, GAS, HEAT, STEAM, STEAMRATE, COOLING, COOLING_POWER, OIL28SEC
+- **Energy vs Power**: ELECTRICITY/GAS/HEAT/STEAM/COOLING are energy over time; ELECTRICAL_POWER/COOLING_POWER/STEAMRATE are instantaneous rates
+- Not all buildings have all utilities; analyze utilities separately unless explicitly converting
+
+### SIMS Building Metadata (CSV)
+- Join key: `buildingNumber` -> meter `simsCode`
+- Key fields: `buildingName`, `grossArea` (sqft), `floorsAboveGround`, `floorsBelowGround`, `constructionDate`, `latitude`, `longitude`, `campusName`
+
+### Weather Data (CSV, hourly, 2025)
+- Join key: `date` -> meter `readingTime`
+- All from OSU main campus location (40.08, -83.06)
+- Key fields: `temperature_2m` (°F), `dew_point_2m`, `relative_humidity_2m`, `precipitation`, `direct_radiation` (W/m²), `wind_speed_10m` (mph), `cloud_cover` (%), `apparent_temperature` (°F)
+
+## Evaluation Rubric
+
+- Data Processing & Scale: 25% — all buildings, automated workflows
+- Analytical Rigor & AI Usage: 25% — ML models, expected vs observed, weather/metadata usage
+- Explainability & Reasoning: 20% — why buildings rank high, visualizations, stated limitations
+- Investment Prioritization Logic: 15% — consistent criteria, portfolio-level reasoning
+- Validation & Reflection: 15% — sanity checks, uncertainty discussion, real-world applicability
+
+## Key Analytical Notes
+
+- Analyze **all buildings**, not a subset
+- Normalize energy by `grossArea` (sqft) for fair comparison
+- Weather is input, energy is output — model expected energy response to weather
+- No ground truth ranking — methodology and clarity matter most
+- Residual: `δ_{b,t} = e_{b,t} - ê_{b,t}`
+- Anomaly flagging: z-score, isolation forest, or autoencoder
+- Multi-objective ranking: `r_b = α₁·s̃_b + α₂·a_b + α₃·g_b` (stakeholder-tunable weights)
