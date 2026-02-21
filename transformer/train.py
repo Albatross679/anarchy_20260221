@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Training script for CNN energy consumption prediction model.
+Training script for Transformer energy consumption prediction model.
 
 Usage:
-    python cnn/train.py                                # defaults
-    python cnn/train.py --name exp1 --seq-length 48    # overrides
-    python cnn/train.py --utility STEAM --epochs 100   # different utility
+    python transformer/train.py                                    # defaults
+    python transformer/train.py --name exp1 --seq-length 48        # overrides
+    python transformer/train.py --utility STEAM --epochs 100       # different utility
+    python transformer/train.py --d-model 128 --n-heads 8          # transformer-specific
 """
 
 import argparse
@@ -20,12 +21,12 @@ import pandas as pd
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-from cnn.config import (
-    EnergyCNNConfig,
+from transformer.config import (
+    EnergyTransformerConfig,
     setup_console_logging,
     setup_output_dir,
 )
-from cnn.model import (
+from transformer.model import (
     create_datasets,
     create_model,
     evaluate_model,
@@ -37,7 +38,7 @@ from src.data_loader import build_feature_matrix
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train CNN energy model")
+    parser = argparse.ArgumentParser(description="Train Transformer energy model")
     parser.add_argument("--name", type=str, default=None, help="Experiment name")
     parser.add_argument("--seed", type=int, default=None, help="Random seed")
     parser.add_argument("--utility", type=str, default=None, help="Utility type")
@@ -46,13 +47,16 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
     parser.add_argument("--batch-size", type=int, default=None, help="Batch size")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
-    parser.add_argument("--no-early-stop", action="store_true", help="Disable early stopping")
+    # Transformer-specific args
+    parser.add_argument("--d-model", type=int, default=None, help="Embedding dimension")
+    parser.add_argument("--n-heads", type=int, default=None, help="Number of attention heads")
+    parser.add_argument("--n-layers", type=int, default=None, help="Number of encoder layers")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    cfg = EnergyCNNConfig()
+    cfg = EnergyTransformerConfig()
 
     # Apply CLI overrides
     if args.name:
@@ -61,26 +65,31 @@ def main():
         cfg.seed = args.seed
     if args.utility:
         cfg.data.utility_filter = args.utility
-        cfg.name = f"energy_cnn_{args.utility.lower()}"
+        cfg.name = f"energy_transformer_{args.utility.lower()}"
     if args.seq_length is not None:
         cfg.data.seq_length = args.seq_length
     if args.epochs is not None:
-        cfg.cnn.epochs = args.epochs
+        cfg.transformer.epochs = args.epochs
     if args.lr is not None:
-        cfg.cnn.learning_rate = args.lr
+        cfg.transformer.learning_rate = args.lr
     if args.batch_size is not None:
         cfg.data.batch_size = args.batch_size
     if args.no_temporal_split:
         cfg.data.temporal_split = False
-    if args.no_early_stop:
-        cfg.cnn.early_stopping_patience = 999
+    # Transformer-specific overrides
+    if args.d_model is not None:
+        cfg.transformer.d_model = args.d_model
+    if args.n_heads is not None:
+        cfg.transformer.n_heads = args.n_heads
+    if args.n_layers is not None:
+        cfg.transformer.n_layers = args.n_layers
 
     # Setup output directory and logging
     run_dir = setup_output_dir(cfg)
     cleanup_logging = setup_console_logging(cfg, run_dir)
 
     print("=" * 60)
-    print(f"CNN Energy Prediction — {cfg.name}")
+    print(f"Transformer Energy Prediction — {cfg.name}")
     print(f"Output: {run_dir}")
     print(f"Utility: {cfg.data.utility_filter}")
     print(f"Seq length: {cfg.data.seq_length}")
@@ -95,8 +104,6 @@ def main():
         df = build_feature_matrix(cfg)
 
         # 2. Split into train/test DataFrames
-        #    We split the full DataFrame (not X/y) because the CNN
-        #    needs readingtime + simscode for temporal windowing.
         print("\n--- Train/Test Split ---")
         data_cfg = cfg.data
         feature_cols = (
@@ -130,7 +137,7 @@ def main():
         print("\n--- Model ---")
         n_features = len(feature_cols)
         model, device = create_model(
-            cfg.cnn, n_features=n_features, seq_length=data_cfg.seq_length
+            cfg.transformer, n_features=n_features, seq_length=data_cfg.seq_length
         )
         n_params = sum(p.numel() for p in model.parameters())
         print(f"  Parameters: {n_params:,}")
@@ -141,7 +148,7 @@ def main():
         print("\n--- Training ---")
         model = train_model(
             model, train_ds, test_ds,
-            params=cfg.cnn,
+            params=cfg.transformer,
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
@@ -151,7 +158,7 @@ def main():
         print("\n--- Evaluation ---")
         metrics = evaluate_model(
             model, test_ds, data_cfg, device, scaler_stats,
-            run_dir=run_dir, params=cfg.cnn,
+            run_dir=run_dir, params=cfg.transformer,
         )
         print(f"  RMSE:  {metrics['rmse']:.6f}")
         print(f"  MAE:   {metrics['mae']:.6f}")
@@ -164,7 +171,7 @@ def main():
             save_model(model, scaler_stats, model_path)
             print(f"\n  Model saved: {model_path}")
 
-        # 9. Generate predictions
+        # 8. Generate predictions
         print("\n--- Generating Predictions ---")
         df_with_preds = get_predictions(
             model, df, feature_cols, data_cfg, device, scaler_stats

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Training script for CNN energy consumption prediction model.
+Training script for Temporal Fusion Transformer energy consumption prediction model.
 
 Usage:
-    python cnn/train.py                                # defaults
-    python cnn/train.py --name exp1 --seq-length 48    # overrides
-    python cnn/train.py --utility STEAM --epochs 100   # different utility
+    python tft/train.py                                        # defaults
+    python tft/train.py --name exp1 --seq-length 48            # overrides
+    python tft/train.py --utility STEAM --epochs 100           # different utility
+    python tft/train.py --hidden-size 128 --num-heads 8        # TFT overrides
 """
 
 import argparse
@@ -20,12 +21,12 @@ import pandas as pd
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-from cnn.config import (
-    EnergyCNNConfig,
+from tft.config import (
+    EnergyTFTConfig,
     setup_console_logging,
     setup_output_dir,
 )
-from cnn.model import (
+from tft.model import (
     create_datasets,
     create_model,
     evaluate_model,
@@ -37,7 +38,7 @@ from src.data_loader import build_feature_matrix
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train CNN energy model")
+    parser = argparse.ArgumentParser(description="Train TFT energy model")
     parser.add_argument("--name", type=str, default=None, help="Experiment name")
     parser.add_argument("--seed", type=int, default=None, help="Random seed")
     parser.add_argument("--utility", type=str, default=None, help="Utility type")
@@ -45,14 +46,16 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=None, help="Training epochs")
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
     parser.add_argument("--batch-size", type=int, default=None, help="Batch size")
+    parser.add_argument("--hidden-size", type=int, default=None, help="TFT hidden size")
+    parser.add_argument("--num-heads", type=int, default=None, help="Attention heads")
+    parser.add_argument("--num-lstm-layers", type=int, default=None, help="LSTM layers in TFT")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
-    parser.add_argument("--no-early-stop", action="store_true", help="Disable early stopping")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    cfg = EnergyCNNConfig()
+    cfg = EnergyTFTConfig()
 
     # Apply CLI overrides
     if args.name:
@@ -61,29 +64,36 @@ def main():
         cfg.seed = args.seed
     if args.utility:
         cfg.data.utility_filter = args.utility
-        cfg.name = f"energy_cnn_{args.utility.lower()}"
+        cfg.name = f"energy_tft_{args.utility.lower()}"
     if args.seq_length is not None:
         cfg.data.seq_length = args.seq_length
     if args.epochs is not None:
-        cfg.cnn.epochs = args.epochs
+        cfg.tft.epochs = args.epochs
     if args.lr is not None:
-        cfg.cnn.learning_rate = args.lr
+        cfg.tft.learning_rate = args.lr
     if args.batch_size is not None:
         cfg.data.batch_size = args.batch_size
+    if args.hidden_size is not None:
+        cfg.tft.hidden_size = args.hidden_size
+    if args.num_heads is not None:
+        cfg.tft.num_heads = args.num_heads
+    if args.num_lstm_layers is not None:
+        cfg.tft.num_lstm_layers = args.num_lstm_layers
     if args.no_temporal_split:
         cfg.data.temporal_split = False
-    if args.no_early_stop:
-        cfg.cnn.early_stopping_patience = 999
 
     # Setup output directory and logging
     run_dir = setup_output_dir(cfg)
     cleanup_logging = setup_console_logging(cfg, run_dir)
 
+    hours_covered = cfg.data.seq_length * 15 / 60  # 15-min intervals -> hours
+
     print("=" * 60)
-    print(f"CNN Energy Prediction — {cfg.name}")
+    print(f"Temporal Fusion Transformer — {cfg.name}")
     print(f"Output: {run_dir}")
     print(f"Utility: {cfg.data.utility_filter}")
-    print(f"Seq length: {cfg.data.seq_length}")
+    print(f"Seq length: {cfg.data.seq_length} ({hours_covered:.1f}h)")
+    print(f"TFT: hidden_size={cfg.tft.hidden_size}, heads={cfg.tft.num_heads}, lstm_layers={cfg.tft.num_lstm_layers}")
     print(f"Seed: {cfg.seed}")
     print("=" * 60)
 
@@ -94,18 +104,19 @@ def main():
         print("\n--- Data Pipeline ---")
         df = build_feature_matrix(cfg)
 
-        # 2. Split into train/test DataFrames
-        #    We split the full DataFrame (not X/y) because the CNN
-        #    needs readingtime + simscode for temporal windowing.
-        print("\n--- Train/Test Split ---")
+        # 2. Split features into temporal and static
         data_cfg = cfg.data
-        feature_cols = (
-            data_cfg.weather_features
-            + data_cfg.building_features
-            + data_cfg.time_features
-        )
-        feature_cols = [c for c in feature_cols if c in df.columns]
+        temporal_cols = data_cfg.weather_features + data_cfg.time_features
+        temporal_cols = [c for c in temporal_cols if c in df.columns]
 
+        static_cols = data_cfg.building_features
+        static_cols = [c for c in static_cols if c in df.columns]
+
+        print(f"  Temporal features ({len(temporal_cols)}): {temporal_cols}")
+        print(f"  Static features ({len(static_cols)}): {static_cols}")
+
+        # 3. Split into train/test DataFrames
+        print("\n--- Train/Test Split ---")
         if data_cfg.temporal_split:
             split_dt = pd.Timestamp(data_cfg.split_date)
             df_train = df[df["readingtime"] < split_dt].copy()
@@ -118,47 +129,46 @@ def main():
 
         print(f"Train: {len(df_train):,} rows | Test: {len(df_test):,} rows")
 
-        # 3. Create windowed datasets
+        # 4. Create windowed datasets
         print("\n--- Creating Sequence Datasets ---")
         train_ds, test_ds, scaler_stats = create_datasets(
-            df_train, df_test, feature_cols, data_cfg
+            df_train, df_test, temporal_cols, static_cols, data_cfg
         )
         print(f"  Train windows: {len(train_ds):,}")
         print(f"  Test windows:  {len(test_ds):,}")
 
-        # 4. Create model
+        # 5. Create model
         print("\n--- Model ---")
-        n_features = len(feature_cols)
         model, device = create_model(
-            cfg.cnn, n_features=n_features, seq_length=data_cfg.seq_length
+            cfg.tft, n_temporal=len(temporal_cols), n_static=len(static_cols)
         )
         n_params = sum(p.numel() for p in model.parameters())
         print(f"  Parameters: {n_params:,}")
         print(f"  Device: {device}")
         print(model)
 
-        # 5. Train (logs to TensorBoard in run_dir/tensorboard/)
+        # 6. Train (logs to TensorBoard in run_dir/tensorboard/)
         print("\n--- Training ---")
         model = train_model(
             model, train_ds, test_ds,
-            params=cfg.cnn,
+            params=cfg.tft,
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
         )
 
-        # 6. Evaluate (logs eval metrics to TensorBoard)
+        # 7. Evaluate (logs eval metrics to TensorBoard)
         print("\n--- Evaluation ---")
         metrics = evaluate_model(
             model, test_ds, data_cfg, device, scaler_stats,
-            run_dir=run_dir, params=cfg.cnn,
+            run_dir=run_dir, params=cfg.tft,
         )
         print(f"  RMSE:  {metrics['rmse']:.6f}")
         print(f"  MAE:   {metrics['mae']:.6f}")
         print(f"  R²:    {metrics['r2']:.4f}")
         print(f"  MAPE:  {metrics['mape_pct']:.2f}%")
 
-        # 7. Save model
+        # 8. Save model
         if cfg.checkpointing.enabled:
             model_path = run_dir / "checkpoints" / cfg.checkpointing.best_filename
             save_model(model, scaler_stats, model_path)
@@ -167,7 +177,7 @@ def main():
         # 9. Generate predictions
         print("\n--- Generating Predictions ---")
         df_with_preds = get_predictions(
-            model, df, feature_cols, data_cfg, device, scaler_stats
+            model, df, temporal_cols, static_cols, data_cfg, device, scaler_stats
         )
         preds_path = run_dir / "predictions.parquet"
         df_with_preds.to_parquet(preds_path, index=False)

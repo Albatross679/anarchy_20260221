@@ -51,6 +51,14 @@ class Checkpointing:
 
 
 @dataclass
+class CleanerConfig:
+    enabled: bool = True
+    lookup_path: str = "data/site_to_building_lookup.csv"
+    fuzzy_threshold: float = 80.0
+    gap_limit_intervals: int = 8
+
+
+@dataclass
 class DataConfig:
     meter_files: List[str] = field(
         default_factory=lambda: [
@@ -62,6 +70,7 @@ class DataConfig:
     weather_file: str = "data/weather-sept-oct-2025.csv"
 
     utility_filter: str = "ELECTRICITY"
+    cleaner: CleanerConfig = field(default_factory=CleanerConfig)
 
     weather_features: List[str] = field(
         default_factory=lambda: [
