@@ -1,0 +1,123 @@
+============================================================
+Two-Stage XGBoost Gas Model (v2) — gas_xgboost_twostage
+Output: output/gas_xgboost_twostage_20260222_032535
+Utility: GAS
+Zero threshold: 1e-05
+Seed: 42
+============================================================
+
+--- Loading Data ---
+  Source: data/tree_features_gas_cross.parquet
+  Loaded: 751,048 rows, 48 columns, 146 buildings
+
+--- Fix 3: Dropping 12 sparse cross-utility columns ---
+    heat_concurrent: 63.8% NaN
+    heat_lag_4: 63.8% NaN
+    heat_lag_96: 63.8% NaN
+    heat_rolling_mean_96: 63.8% NaN
+    steam_concurrent: 90.4% NaN
+    steam_lag_4: 90.4% NaN
+    steam_lag_96: 90.4% NaN
+    steam_rolling_mean_96: 90.4% NaN
+    cooling_concurrent: 75.3% NaN
+    cooling_lag_4: 75.3% NaN
+    cooling_lag_96: 75.3% NaN
+    cooling_rolling_mean_96: 75.3% NaN
+  Filling NaN in 4 columns with 0:
+    electricity_concurrent: 36,112 NaN (4.8%)
+    electricity_lag_4: 36,112 NaN (4.8%)
+    electricity_lag_96: 36,112 NaN (4.8%)
+    electricity_rolling_mean_96: 36,108 NaN (4.8%)
+
+--- Fix 4: Separating always-off buildings ---
+  Always-off (>99.9% zero): 31 buildings, 160,080 rows
+  Active: 115 buildings, 590,968 rows
+
+--- Zero Analysis (active buildings only) ---
+  Total samples: 590,968
+  Zero samples:  353,140 (59.8%)
+  Non-zero:      237,828 (40.2%)
+
+--- Train/Test Split ---
+
+--- Fix 1: Target-encoding building identity ---
+  Encoded 115 buildings (train-set means)
+  Range: 0.00000000 — 0.00112298
+
+  Final features (31): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd', 'electricity_concurrent', 'electricity_lag_4', 'electricity_lag_96', 'electricity_rolling_mean_96', 'building_target_enc']
+  Train: 250,940 rows | Test: 340,028 rows
+  Train on/off: 89,736 on / 161,204 off
+  Test on/off:  148,092 on / 191,936 off
+  Auto scale_pos_weight: 1.80
+
+============================================================
+STAGE 1: Training Classifier (on/off)
+============================================================
+[0]	validation_0-logloss:0.65734	validation_1-logloss:0.66012
+[50]	validation_0-logloss:0.21559	validation_1-logloss:0.26665
+[100]	validation_0-logloss:0.18555	validation_1-logloss:0.24229
+[150]	validation_0-logloss:0.17768	validation_1-logloss:0.23993
+[200]	validation_0-logloss:0.17014	validation_1-logloss:0.23956
+[250]	validation_0-logloss:0.16246	validation_1-logloss:0.23851
+[300]	validation_0-logloss:0.15605	validation_1-logloss:0.23835
+[342]	validation_0-logloss:0.15083	validation_1-logloss:0.23851
+  Classifier TensorBoard logs: output/gas_xgboost_twostage_20260222_032535/tensorboard
+
+--- Classifier Evaluation ---
+  Accuracy:  0.8951
+  Precision: 0.8841
+  Recall:    0.8737
+  F1:        0.8788
+  AUC:       0.9641
+
+============================================================
+STAGE 2: Training Regressor (non-zero, log1p target)
+============================================================
+  Non-zero train: 89,736 rows
+  Non-zero test:  148,092 rows
+  Target range (log1p): -11.511839 — -6.585997
+[0]	validation_0-rmse:1.00608	validation_1-rmse:1.01152
+[50]	validation_0-rmse:0.44209	validation_1-rmse:0.55402
+[100]	validation_0-rmse:0.39962	validation_1-rmse:0.54610
+[137]	validation_0-rmse:0.37987	validation_1-rmse:0.54734
+  Regressor TensorBoard logs: output/gas_xgboost_twostage_20260222_032535/tensorboard/regressor
+
+--- Regressor Evaluation (non-zero subset, original space) ---
+  RMSE:  0.000141
+  MAE:   0.000073
+  R²:    0.5943
+  MAPE:  47.31%
+  Trees: 88
+
+============================================================
+COMBINED: Two-Stage Pipeline Evaluation (active buildings)
+============================================================
+  SHAP plots saved.
+  Blending strategies:
+    hard (0/1 gate):        R² = 0.5576
+    soft (prob * reg):       R² = 0.5851
+    optimal (cutoff=0.40):  R² = 0.5622
+  Best strategy: soft
+  Combined R²:   0.5851
+  Combined RMSE: 0.000114
+  Combined MAE:  0.000048
+  R² (non-zero): 0.4533
+  Zero cls accuracy:    0.9116
+  Nonzero cls accuracy: 0.8737
+
+--- Overall R² (all 146 buildings) ---
+  Active buildings R²:    0.5851
+  + 31 always-off (predicted=0)
+  Overall R²:             0.6057
+
+--- Saving ---
+  Classifier saved: output/gas_xgboost_twostage_20260222_032535/checkpoints/classifier_best.json
+  Regressor saved:  output/gas_xgboost_twostage_20260222_032535/checkpoints/regressor_best.json
+  Metrics saved: output/gas_xgboost_twostage_20260222_032535/metrics.json
+  Predictions saved: output/gas_xgboost_twostage_20260222_032535/predictions.parquet (432,280 rows, blend_mode=soft)
+
+============================================================
+Done in 105.1s
+Output directory: output/gas_xgboost_twostage_20260222_032535
+Overall R²: 0.6057 (vs previous 0.633)
+============================================================

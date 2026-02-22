@@ -79,7 +79,8 @@ class TransformerParams:
 class EnergyTransformerConfig(MLBaseConfig):
     """Top-level config for Transformer energy model."""
 
-    name: str = "energy_transformer"
+    name: str = "electricity_transformer"
+    model_type: str = "transformer"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "tensorboard": "tensorboard"}

@@ -61,7 +61,8 @@ class LightGBMParams:
 class EnergyLightGBMConfig(MLBaseConfig):
     """Top-level config for LightGBM energy model."""
 
-    name: str = "energy_lightgbm"
+    name: str = "electricity_lightgbm"
+    model_type: str = "lightgbm"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "plots": "plots", "tensorboard": "tensorboard"}

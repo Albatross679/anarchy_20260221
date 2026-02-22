@@ -30,21 +30,35 @@ pytest tests/test_scoring.py -v          # single test file
 pytest tests/test_scoring.py::test_name  # single test
 ```
 
+### Pre-compute tree features
+```bash
+python src/prepare_tree_features.py                          # all utilities
+python src/prepare_tree_features.py --utilities ELECTRICITY  # single utility
+```
+Outputs `data/tree_features_{utility}.parquet` + `data/tree_features_manifest.json`.
+
+Then train any tree model with `--precomputed` to skip the data pipeline:
+```bash
+python xgb/train.py --precomputed --utility ELECTRICITY
+```
+
 ## Architecture
 
 ```
 src/
-├── data_loader.py    # Load and preprocess energy, weather, building data
-├── model.py          # Predictive model f_θ(w_t, m_b, t) for expected consumption
-├── scoring.py        # Compute residuals δ_{b,t} and building-level scores s_b
-├── anomaly.py        # Anomaly detection (z-score, isolation forest)
-├── optimizer.py      # 0-1 knapsack / ranking for investment selection
-├── explainer.py      # Explainability and visualization of rankings
-└── utils/            # Shared helpers
+├── data_loader.py           # Load and preprocess energy, weather, building data
+├── feature_engineer.py      # Shared tree-model feature engineering (lags, rolling, interactions)
+├── prepare_tree_features.py # CLI: pre-compute tree features to parquet (run once, train many)
+├── model.py                 # Predictive model f_θ(w_t, m_b, t) for expected consumption
+├── scoring.py               # Compute residuals δ_{b,t} and building-level scores s_b
+├── anomaly.py               # Anomaly detection (z-score, isolation forest)
+├── optimizer.py             # 0-1 knapsack / ranking for investment selection
+├── explainer.py             # Explainability and visualization of rankings
+└── utils/                   # Shared helpers
 ```
 
 - `data/` — energy meter CSVs, weather data, building metadata
-- `output/` — generated rankings, reports, plots
+- `output/` — generated rankings, reports, plots (named `{utility}_{model}_{timestamp}`, e.g. `electricity_xgboost_20260222_001425`)
 - `model/` — saved model weights
 - `doc/` — info packet, challenge documentation, and model specs
   - `doc/CNN_MODEL.md` — CNN model input/output specification

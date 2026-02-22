@@ -1,0 +1,44 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/gas_xgboost_20260222_024315
+Utility: GAS
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_gas_cross.parquet
+  Manifest key: GAS_CROSS
+  Rows: 751,048 | Features: 43
+  Buildings: 146
+  Features (43): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd', 'electricity_concurrent', 'electricity_lag_4', 'electricity_lag_96', 'electricity_rolling_mean_96', 'heat_concurrent', 'heat_lag_4', 'heat_lag_96', 'heat_rolling_mean_96', 'steam_concurrent', 'steam_lag_4', 'steam_lag_96', 'steam_rolling_mean_96', 'cooling_concurrent', 'cooling_lag_4', 'cooling_lag_96', 'cooling_rolling_mean_96']
+  Dataset: 751,048 rows
+
+--- Train/Test Split ---
+  Train: 318,768 rows | Test: 432,280 rows
+  Features (43): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd', 'electricity_concurrent', 'electricity_lag_4', 'electricity_lag_96', 'electricity_rolling_mean_96', 'heat_concurrent', 'heat_lag_4', 'heat_lag_96', 'heat_rolling_mean_96', 'steam_concurrent', 'steam_lag_4', 'steam_lag_96', 'steam_rolling_mean_96', 'cooling_concurrent', 'cooling_lag_4', 'cooling_lag_96', 'cooling_rolling_mean_96']
+
+--- Training ---
+[0]	validation_0-rmse:0.00013	validation_1-rmse:0.00016
+[50]	validation_0-rmse:0.00007	validation_1-rmse:0.00010
+[100]	validation_0-rmse:0.00006	validation_1-rmse:0.00010
+[150]	validation_0-rmse:0.00006	validation_1-rmse:0.00009
+[200]	validation_0-rmse:0.00006	validation_1-rmse:0.00009
+[215]	validation_0-rmse:0.00006	validation_1-rmse:0.00009
+  TensorBoard logs: output/gas_xgboost_20260222_024315/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000095
+  MAE:   0.000037
+  R²:    0.6539
+  MAPE:  5475.55%
+  Trees: 166
+
+--- Saving ---
+  Model saved: output/gas_xgboost_20260222_024315/checkpoints/model_best.json
+  Predictions saved: output/gas_xgboost_20260222_024315/predictions.parquet
+
+============================================================
+Done in 102.1s
+Output directory: output/gas_xgboost_20260222_024315
+============================================================

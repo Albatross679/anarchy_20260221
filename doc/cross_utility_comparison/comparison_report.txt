@@ -1,0 +1,107 @@
+======================================================================
+CROSS-UTILITY COMPARISON REPORT — XGBoost Models
+======================================================================
+
+--- Overall Model Metrics ---
+    Utility       R²     RMSE      MAE  Buildings  Test Samples  Trees Used
+ELECTRICITY 0.953670 0.000056 0.000013        263        781716         170
+    COOLING 0.965600 0.000362 0.000071         86        253212         312
+        GAS 0.639449 0.000097 0.000037        146        432280         166
+       HEAT 0.920183 0.000033 0.000017        129        380968         106
+      STEAM 0.964615 0.002877 0.000834         26         72708         195
+
+--- Building Coverage ---
+  Total unique buildings: 275
+  Buildings with 5 utilities: 3
+  Buildings with 4 utilities: 38
+  Buildings with 3 utilities: 66
+  Buildings with 2 utilities: 117
+  Buildings with 1 utilities: 51
+
+--- Top 10 Worst Buildings Per Utility ---
+
+  ELECTRICITY:
+    Bldg  376.0  R²=0.8722  RMSE=3.996814e-04  mean_resid=2.138166e-04
+    Bldg  388.0  R²=0.9039  RMSE=3.999342e-04  mean_resid=1.549185e-04
+    Bldg   69.0  R²=0.8325  RMSE=2.792157e-04  mean_resid=-6.966428e-05
+    Bldg  230.0  R²=0.1148  RMSE=1.662375e-04  mean_resid=6.126038e-05
+    Bldg   29.0  R²=0.8405  RMSE=3.654870e-04  mean_resid=5.382403e-05
+    Bldg  304.0  R²=0.3844  RMSE=2.702167e-04  mean_resid=1.596334e-05
+    Bldg  265.0  R²=0.0000  RMSE=9.102948e-06  mean_resid=-9.101808e-06
+    Bldg   91.0  R²=0.0000  RMSE=9.102948e-06  mean_resid=-9.101808e-06
+    Bldg  298.0  R²=0.0000  RMSE=9.102948e-06  mean_resid=-9.101808e-06
+    Bldg  186.0  R²=0.0000  RMSE=9.102948e-06  mean_resid=-9.101808e-06
+
+  COOLING:
+    Bldg  376.0  R²=0.2329  RMSE=2.518596e-03  mean_resid=1.046511e-03
+    Bldg  388.0  R²=0.8992  RMSE=1.473610e-03  mean_resid=6.698523e-04
+    Bldg 1018.0  R²=0.6081  RMSE=9.752753e-04  mean_resid=1.598032e-04
+    Bldg   69.0  R²=0.9766  RMSE=4.117211e-04  mean_resid=2.741333e-05
+    Bldg   41.0  R²=0.9469  RMSE=1.520716e-04  mean_resid=-2.095036e-05
+    Bldg  371.0  R²=0.9533  RMSE=1.630985e-04  mean_resid=-1.886190e-05
+    Bldg  180.0  R²=0.9459  RMSE=1.217197e-04  mean_resid=-1.684410e-05
+    Bldg  280.0  R²=0.9606  RMSE=2.949503e-04  mean_resid=-1.654747e-05
+    Bldg  144.0  R²=0.8901  RMSE=9.590112e-05  mean_resid=-1.594025e-05
+    Bldg 1044.0  R²=0.8848  RMSE=1.096753e-04  mean_resid=-1.555304e-05
+
+  GAS:
+    Bldg  882.0  R²=-1.4206  RMSE=2.205697e-04  mean_resid=1.431558e-04
+    Bldg 1106.0  R²=0.0549  RMSE=3.016345e-04  mean_resid=6.211246e-05
+    Bldg  362.0  R²=0.5078  RMSE=1.999066e-04  mean_resid=4.640660e-05
+    Bldg  307.0  R²=0.0514  RMSE=3.026078e-04  mean_resid=3.560938e-05
+    Bldg  358.0  R²=0.3995  RMSE=1.520266e-04  mean_resid=3.485325e-05
+    Bldg  310.0  R²=0.0373  RMSE=3.313300e-04  mean_resid=2.389191e-05
+    Bldg   29.0  R²=0.1383  RMSE=2.007525e-04  mean_resid=1.840995e-05
+    Bldg  222.0  R²=0.0953  RMSE=2.593265e-04  mean_resid=1.724302e-05
+    Bldg  130.0  R²=0.0865  RMSE=2.349192e-04  mean_resid=1.646118e-05
+    Bldg  270.0  R²=0.4142  RMSE=7.882961e-05  mean_resid=1.617997e-05
+
+  HEAT:
+    Bldg  390.0  R²=0.7682  RMSE=1.164299e-04  mean_resid=5.024511e-05
+    Bldg  250.0  R²=0.4114  RMSE=5.668676e-05  mean_resid=3.647375e-05
+    Bldg    7.0  R²=0.7603  RMSE=6.318999e-05  mean_resid=1.794647e-05
+    Bldg 1018.0  R²=0.8880  RMSE=2.888075e-05  mean_resid=1.030995e-05
+    Bldg   10.0  R²=0.8167  RMSE=6.453893e-05  mean_resid=9.050347e-06
+    Bldg  388.0  R²=0.8405  RMSE=3.674018e-05  mean_resid=7.589419e-06
+    Bldg  105.0  R²=0.6379  RMSE=6.657698e-05  mean_resid=5.755812e-06
+    Bldg 1109.0  R²=-0.2416  RMSE=6.806923e-05  mean_resid=-5.330734e-06
+    Bldg  280.0  R²=0.9211  RMSE=6.147936e-06  mean_resid=5.214031e-06
+    Bldg  247.0  R²=0.4949  RMSE=8.660112e-05  mean_resid=-5.211190e-06
+
+  STEAM:
+    Bldg  371.0  R²=0.6235  RMSE=7.522082e-03  mean_resid=4.105143e-03
+    Bldg   53.0  R²=-0.0050  RMSE=7.034957e-03  mean_resid=3.745314e-03
+    Bldg   69.0  R²=0.7850  RMSE=4.150368e-03  mean_resid=5.176279e-04
+    Bldg  249.0  R²=-0.9926  RMSE=3.698330e-04  mean_resid=2.474291e-04
+    Bldg 1044.0  R²=0.2836  RMSE=4.002609e-03  mean_resid=1.748332e-04
+    Bldg  157.0  R²=-0.7040  RMSE=1.848498e-04  mean_resid=-7.103663e-05
+    Bldg  165.0  R²=0.0000  RMSE=2.353076e-05  mean_resid=-2.342592e-05
+    Bldg  276.0  R²=-0.1455  RMSE=4.833884e-05  mean_resid=-1.829532e-05
+    Bldg   89.0  R²=0.8175  RMSE=3.933721e-05  mean_resid=1.096969e-05
+    Bldg   12.0  R²=0.7008  RMSE=5.915024e-05  mean_resid=1.022367e-05
+
+--- Composite Investment Ranking (Top 20) ---
+  Score = sum of z-scored |mean_residual| across utilities
+
+   1. Bldg    376  z=19.340  utilities=3  mean_R²=-0.0080  area=34246 sqft  [COOLING, ELECTRICITY, HEAT]
+   2. Bldg    388  z=14.241  utilities=3  mean_R²=0.8812  area=83056 sqft  [COOLING, ELECTRICITY, HEAT]
+   3. Bldg    882  z=9.903  utilities=2  mean_R²=-0.2701  area=41461 sqft  [ELECTRICITY, GAS]
+   4. Bldg    390  z=8.259  utilities=2  mean_R²=0.1238  area=19518 sqft  [ELECTRICITY, HEAT]
+   5. Bldg    250  z=5.589  utilities=3  mean_R²=0.7516  area=69508 sqft  [COOLING, ELECTRICITY, HEAT]
+   6. Bldg     29  z=3.853  utilities=2  mean_R²=0.4894  area=5417 sqft  [ELECTRICITY, GAS]
+   7. Bldg     69  z=3.596  utilities=4  mean_R²=0.8244  area=110142 sqft  [COOLING, ELECTRICITY, HEAT, STEAM]
+   8. Bldg   1106  z=3.431  utilities=4  mean_R²=0.5790  area=27916 sqft  [COOLING, ELECTRICITY, GAS, HEAT]
+   9. Bldg    371  z=3.345  utilities=5  mean_R²=0.5940  area=110310 sqft  [COOLING, ELECTRICITY, GAS, HEAT, STEAM]
+  10. Bldg    230  z=3.309  utilities=1  mean_R²=0.1148  area=938 sqft  [ELECTRICITY]
+  11. Bldg    362  z=2.784  utilities=2  mean_R²=0.6346  area=16525 sqft  [ELECTRICITY, GAS]
+  12. Bldg     53  z=2.506  utilities=5  mean_R²=-0.8836  area=117661 sqft  [COOLING, ELECTRICITY, GAS, HEAT, STEAM]
+  13. Bldg      7  z=2.262  utilities=3  mean_R²=0.8580  area=61621 sqft  [COOLING, ELECTRICITY, HEAT]
+  14. Bldg    307  z=2.067  utilities=2  mean_R²=0.3372  area=81611 sqft  [ELECTRICITY, GAS]
+  15. Bldg    358  z=2.000  utilities=2  mean_R²=0.5200  area=25545 sqft  [ELECTRICITY, GAS]
+  16. Bldg   1018  z=1.723  utilities=4  mean_R²=-34.2747  area=124191 sqft  [COOLING, ELECTRICITY, HEAT, STEAM]
+  17. Bldg    310  z=1.178  utilities=2  mean_R²=0.4297  area=59654 sqft  [ELECTRICITY, GAS]
+  18. Bldg    304  z=0.930  utilities=2  mean_R²=0.3382  area=10120 sqft  [ELECTRICITY, GAS]
+  19. Bldg    222  z=0.799  utilities=2  mean_R²=0.4904  area=9167 sqft  [ELECTRICITY, GAS]
+  20. Bldg    130  z=0.721  utilities=2  mean_R²=0.4317  area=8977 sqft  [ELECTRICITY, GAS]
+
+======================================================================

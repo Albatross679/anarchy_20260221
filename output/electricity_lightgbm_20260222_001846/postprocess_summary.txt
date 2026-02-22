@@ -1,0 +1,84 @@
+============================================================
+POSTPROCESSING REPORT — LightGBM
+Output directory: output/energy_lightgbm_20260222_001846
+============================================================
+
+--- Training Summary ---
+  Model type:     LightGBM
+  Training time:  250.8s
+  Seed:           42
+  Utility:        ELECTRICITY
+
+--- Hyperparameters ---
+  n_estimators: 1000
+  max_depth: -1
+  num_leaves: 63
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  min_child_samples: 20
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+  early_stopping_rounds: 50
+  metric: rmse
+  verbose: 50
+
+--- Data Configuration ---
+  Split type:       Temporal
+  Split date:       2025-10-01
+  Lag hours:        [1, 6, 24, 168]
+  Rolling windows:  [24, 168]
+  Interactions:     True
+
+--- Final Evaluation Metrics ---
+  RMSE:           5.2053130300344554e-05
+  MAE:            1.2670742329410255e-05
+  R²:             0.9600725495233733
+  MAPE:           436.861978776411%
+  Test samples:   781644
+  Trees used:     246
+
+--- Top 10 Feature Importances ---
+   1. energy_lag_4                    695
+   2. energy_lag_672                  527
+   3. rolling_std_96                  434
+   4. rolling_mean_96                 421
+   5. energy_lag_96                   389
+   6. hour_of_day                     387
+   7. rolling_std_672                 364
+   8. temp_x_area                     344
+   9. apparent_temperature            241
+  10. temperature_2m                  212
+
+--- Training Rounds Summary ---
+  Total rounds logged:  6
+  First round:          50.0
+  Last round:           246.0
+  Best val RMSE:        5.205310e-05 (round 246)
+  Final train RMSE:     3.982210e-05
+  Final val RMSE:       5.205310e-05
+  Train-Val gap:        1.223100e-05 (overfitting)
+
+--- Per-Building Performance ---
+  Buildings evaluated:  263
+  Median R²:            0.8292
+  Mean R²:              -166929483527087800692244480.0000
+  R² range:             [-27668948630961842503037222912.0000, 0.9871]
+  Buildings with R²>0.9: 52
+  Buildings with R²<0:   22
+
+  Top 5 buildings (best R²):
+           136  R²=0.9871  RMSE=9.832014e-06  n=5164
+           157  R²=0.9623  RMSE=1.599316e-05  n=5164
+           295  R²=0.9576  RMSE=2.543362e-05  n=5164
+           180  R²=0.9571  RMSE=3.722871e-05  n=5164
+           363  R²=0.9554  RMSE=1.654310e-05  n=5164
+
+  Bottom 5 buildings (worst R²):
+           288  R²=-22.2674  RMSE=1.097241e-06  n=5164
+           178  R²=-1722.8184  RMSE=4.730622e-06  n=5164
+           179  R²=-85979.1000  RMSE=4.167275e-06  n=5160
+           864  R²=-16233505536662245127653163008.0000  RMSE=1.726738e-06  n=5164
+           103  R²=-27668948630961842503037222912.0000  RMSE=2.254325e-06  n=5164
+
+============================================================

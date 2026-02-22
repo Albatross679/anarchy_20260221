@@ -1,0 +1,43 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/electricity_xgboost_20260222_021830
+Utility: ELECTRICITY
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_electricity.parquet
+  Rows: 1,352,204 | Features: 27
+  Buildings: 263
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+  Dataset: 1,352,204 rows
+
+--- Train/Test Split ---
+  Train: 570,488 rows | Test: 781,716 rows
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+
+--- Training ---
+[0]	validation_0-rmse:0.00028	validation_1-rmse:0.00025
+[50]	validation_0-rmse:0.00005	validation_1-rmse:0.00007
+[100]	validation_0-rmse:0.00004	validation_1-rmse:0.00006
+[150]	validation_0-rmse:0.00004	validation_1-rmse:0.00006
+[200]	validation_0-rmse:0.00004	validation_1-rmse:0.00006
+[219]	validation_0-rmse:0.00004	validation_1-rmse:0.00006
+  TensorBoard logs: output/electricity_xgboost_20260222_021830/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000056
+  MAE:   0.000013
+  R²:    0.9537
+  MAPE:  1094.97%
+  Trees: 170
+
+--- Saving ---
+  Model saved: output/electricity_xgboost_20260222_021830/checkpoints/model_best.json
+  Predictions saved: output/electricity_xgboost_20260222_021830/predictions.parquet
+
+============================================================
+Done in 196.7s
+Output directory: output/electricity_xgboost_20260222_021830
+============================================================

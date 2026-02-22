@@ -1,0 +1,50 @@
+============================================================
+XGBoost Energy Prediction — oil28sec_xgboost
+Output: output/oil28sec_xgboost_20260222_012302
+Utility: OIL28SEC
+Seed: 42
+============================================================
+
+--- Data Pipeline ---
+Loading building metadata...
+  Buildings with valid area: 1,178
+Loading meter data...
+  Raw meter readings: 8,781
+  After aggregation: 1,464
+  After 15-min resample: 5,856
+  After building join: 5,856
+  Unique buildings: 1
+Loading weather data...
+  After weather join: 5,836
+  Outlier removal: 56 rows removed (1st-99th percentile)
+  Final dataset: 5,780 rows, 1 buildings
+
+--- Feature Engineering ---
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+  Dataset after engineering: 5,108 rows
+
+--- Train/Test Split ---
+  Train: 2,188 rows | Test: 2,920 rows
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+
+--- Training ---
+[0]	validation_0-rmse:0.00000	validation_1-rmse:0.00000
+[50]	validation_0-rmse:0.00000	validation_1-rmse:0.00000
+  TensorBoard logs: output/oil28sec_xgboost_20260222_012302/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000000
+  MAE:   0.000000
+  R²:    -0.0014
+  MAPE:  100.00%
+  Trees: 1
+
+--- Saving ---
+  Model saved: output/oil28sec_xgboost_20260222_012302/checkpoints/model_best.json
+  Predictions saved: output/oil28sec_xgboost_20260222_012302/predictions.parquet
+
+============================================================
+Done in 51.3s
+Output directory: output/oil28sec_xgboost_20260222_012302
+============================================================

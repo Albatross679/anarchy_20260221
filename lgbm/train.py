@@ -34,7 +34,7 @@ from lgbm.model import (
     save_model,
     train_model,
 )
-from src.data_loader import build_feature_matrix
+from src.data_loader import build_feature_matrix, load_precomputed_tree_features
 
 
 def parse_args():
@@ -48,6 +48,7 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
     parser.add_argument("--no-early-stop", action="store_true", help="Disable early stopping")
+    parser.add_argument("--precomputed", action="store_true", help="Load pre-computed features from parquet")
     return parser.parse_args()
 
 
@@ -62,7 +63,6 @@ def main():
         cfg.seed = args.seed
     if args.utility:
         cfg.data.utility_filter = args.utility
-        cfg.name = f"energy_lightgbm_{args.utility.lower()}"
     if args.n_estimators is not None:
         cfg.lgbm.n_estimators = args.n_estimators
     if args.max_depth is not None:
@@ -90,15 +90,20 @@ def main():
     t0 = time.time()
 
     try:
-        # 1. Build feature matrix
-        print("\n--- Data Pipeline ---")
-        df = build_feature_matrix(cfg)
+        # 1. Build feature matrix + engineer features
+        if args.precomputed:
+            print("\n--- Loading Pre-computed Features ---")
+            df, feature_cols = load_precomputed_tree_features(
+                cfg.data.utility_filter, cfg.data.precomputed_features_dir,
+            )
+        else:
+            print("\n--- Data Pipeline ---")
+            df = build_feature_matrix(cfg)
+            print("\n--- Feature Engineering ---")
+            df, feature_cols = engineer_features(df, cfg.data)
 
-        # 2. Engineer features (lags, rolling, interactions)
-        print("\n--- Feature Engineering ---")
-        df, feature_cols = engineer_features(df, cfg.data)
         print(f"  Features ({len(feature_cols)}): {feature_cols}")
-        print(f"  Dataset after engineering: {len(df):,} rows")
+        print(f"  Dataset: {len(df):,} rows")
 
         # 3. Split (temporal or random) — manual split to preserve engineered features
         print("\n--- Train/Test Split ---")

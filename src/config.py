@@ -99,6 +99,10 @@ class DataConfig:
     utility_filter: str = "ELECTRICITY"
     cleaner: CleanerConfig = field(default_factory=CleanerConfig)
 
+    # Use pre-cleaned CSVs (data/cleaned_{utility}.csv) instead of raw meter files
+    use_cleaned_data: bool = True
+    cleaned_data_dir: str = "data"
+
     weather_features: List[str] = field(
         default_factory=lambda: [
             "temperature_2m",
@@ -126,6 +130,10 @@ class DataConfig:
             "is_weekend",
         ]
     )
+
+    # Pre-computed tree features (from src/prepare_tree_features.py)
+    use_precomputed_features: bool = False
+    precomputed_features_dir: str = "data"
 
     # Temporal split: train on Sept, test on Oct
     temporal_split: bool = True
@@ -159,9 +167,21 @@ class XGBoostParams:
 @dataclass
 class MLBaseConfig:
     name: str = "experiment"
+    model_type: str = "model"
     seed: int = 42
     output_dir: str = "output"
     tensorboard: TensorBoardConfig = field(default_factory=TensorBoardConfig)
+
+    def get_run_name(self) -> str:
+        """Build run name as {utility}_{model_type}.
+
+        Uses data.utility_filter if available, otherwise falls back to self.name.
+        """
+        data_cfg = getattr(self, "data", None)
+        utility = getattr(data_cfg, "utility_filter", None)
+        if utility:
+            return f"{utility.lower()}_{self.model_type}"
+        return self.name
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +191,8 @@ class MLBaseConfig:
 
 @dataclass
 class EnergyModelConfig(MLBaseConfig):
-    name: str = "energy_xgboost"
+    name: str = "electricity_xgboost"
+    model_type: str = "xgboost"
     output: OutputDir = field(default_factory=OutputDir)
     console: ConsoleLogging = field(default_factory=ConsoleLogging)
     checkpointing: Checkpointing = field(default_factory=Checkpointing)
@@ -211,7 +232,8 @@ def setup_output_dir(cfg) -> Path:
         do_save_config = True
 
     timestamp = datetime.now().strftime(timestamp_fmt)
-    run_dir = Path(base_dir) / f"{cfg.name}_{timestamp}"
+    run_name = cfg.get_run_name() if hasattr(cfg, "get_run_name") else cfg.name
+    run_dir = Path(base_dir) / f"{run_name}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     for subdir_name in subdirs.values():

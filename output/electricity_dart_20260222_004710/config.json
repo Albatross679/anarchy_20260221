@@ -1,0 +1,107 @@
+{
+  "name": "energy_dart",
+  "seed": 42,
+  "output_dir": "output",
+  "tensorboard": {
+    "enabled": true,
+    "log_system_metrics": true,
+    "log_cpu": true,
+    "log_gpu_utilization": true,
+    "log_vram": true,
+    "log_gpu_temp": true,
+    "log_gpu_power": true,
+    "log_hparams_text": true,
+    "log_histograms": true,
+    "histogram_every_n_epochs": 5
+  },
+  "output": {
+    "base_dir": "output",
+    "save_config": true,
+    "timestamp_format": "%Y%m%d_%H%M%S",
+    "subdirs": {
+      "checkpoints": "checkpoints",
+      "plots": "plots",
+      "tensorboard": "tensorboard"
+    }
+  },
+  "console": {
+    "enabled": true,
+    "filename": "console.log",
+    "tee_to_console": true
+  },
+  "checkpointing": {
+    "enabled": true,
+    "save_best": true,
+    "save_every_n_epochs": 5,
+    "metric": "rmse",
+    "mode": "min",
+    "best_filename": "model_best.json"
+  },
+  "data": {
+    "meter_files": [
+      "data/meter-data-sept-2025.csv",
+      "data/meter-data-oct-2025.csv"
+    ],
+    "building_metadata_file": "data/building_metadata.csv",
+    "weather_file": "data/weather-sept-oct-2025.csv",
+    "utility_filter": "ELECTRICITY",
+    "cleaner": {
+      "enabled": true,
+      "lookup_path": "data/site_to_building_lookup.csv",
+      "fuzzy_threshold": 80.0,
+      "gap_limit_intervals": 8
+    },
+    "weather_features": [
+      "temperature_2m",
+      "relative_humidity_2m",
+      "dew_point_2m",
+      "direct_radiation",
+      "wind_speed_10m",
+      "cloud_cover",
+      "apparent_temperature",
+      "precipitation"
+    ],
+    "building_features": [
+      "grossarea",
+      "floorsaboveground",
+      "building_age"
+    ],
+    "time_features": [
+      "hour_of_day",
+      "minute_of_hour",
+      "day_of_week",
+      "is_weekend"
+    ],
+    "temporal_split": true,
+    "split_date": "2025-10-01",
+    "random_split_ratio": 0.8,
+    "lag_hours": [
+      1,
+      6,
+      24,
+      168
+    ],
+    "rolling_windows": [
+      24,
+      168
+    ],
+    "add_interactions": true
+  },
+  "dart": {
+    "n_estimators": 10,
+    "max_depth": 7,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 5,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "tree_method": "hist",
+    "eval_metric": "rmse",
+    "rate_drop": 0.1,
+    "skip_drop": 0.5,
+    "sample_type": "uniform",
+    "normalize_type": "tree",
+    "early_stopping_rounds": 0
+  }
+}

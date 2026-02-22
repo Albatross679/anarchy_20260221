@@ -1,0 +1,82 @@
+============================================================
+POSTPROCESSING REPORT — CatBoost
+Output directory: output/energy_catboost_20260222_004712
+============================================================
+
+--- Training Summary ---
+  Model type:     CatBoost
+  Training time:  103.8s
+  Seed:           42
+  Utility:        ELECTRICITY
+
+--- Hyperparameters ---
+  iterations: 10
+  depth: 7
+  learning_rate: 0.05
+  l2_leaf_reg: 3.0
+  random_strength: 1.0
+  bagging_temperature: 1.0
+  border_count: 254
+  early_stopping_rounds: 50
+  eval_metric: RMSE
+  verbose: 50
+
+--- Data Configuration ---
+  Split type:       Temporal
+  Split date:       2025-10-01
+  Lag hours:        [1, 6, 24, 168]
+  Rolling windows:  [24, 168]
+  Interactions:     True
+
+--- Final Evaluation Metrics ---
+  RMSE:           0.0001590247224309115
+  MAE:            7.067256521707328e-05
+  R²:             0.627344814498215
+  MAPE:           12597.413212897176%
+  Test samples:   781644
+  Trees used:     9
+
+--- Top 10 Feature Importances ---
+   1. energy_lag_4                    40.827881961938616
+   2. energy_lag_96                   26.24098327941462
+   3. energy_lag_672                  11.983004652747539
+   4. building_age                    10.077007207193112
+   5. rolling_mean_96                 3.114842122407889
+   6. rolling_std_672                 2.8606485734880125
+   7. apparent_temperature            2.2531650938116647
+   8. energy_lag_24                   1.3671445141606104
+   9. grossarea                       1.275322594837903
+  10. temperature_2m                  0.0
+
+--- Training Rounds Summary ---
+  Total rounds logged:  2
+  First round:          0.0
+  Last round:           9.0
+  Best val RMSE:        1.590000e-04 (round 9)
+  Final train RMSE:     1.839000e-04
+  Final val RMSE:       1.590000e-04
+  Train-Val gap:        -2.490000e-05 (underfitting)
+
+--- Per-Building Performance ---
+  Buildings evaluated:  263
+  Median R²:            -2.8929
+  Mean R²:              -137336570594341781095458013184.0000
+  R² range:             [-25373275767715636657378604089344.0000, 0.4760]
+  Buildings with R²>0.9: 0
+  Buildings with R²<0:   207
+
+  Top 5 buildings (best R²):
+           156  R²=0.4760  RMSE=2.382960e-05  n=5164
+           222  R²=0.4712  RMSE=3.650849e-05  n=5164
+            12  R²=0.4659  RMSE=2.965268e-05  n=5164
+           158  R²=0.4641  RMSE=2.352055e-04  n=5164
+           211  R²=0.4563  RMSE=4.314639e-05  n=5164
+
+  Bottom 5 buildings (worst R²):
+           288  R²=-199560.4680  RMSE=1.016170e-04  n=5164
+           178  R²=-866406.3205  RMSE=1.060556e-04  n=5164
+           179  R²=-56881444.4600  RMSE=1.071861e-04  n=5160
+           103  R²=-10746242298596251542028434800640.0000  RMSE=4.442716e-05  n=5164
+           864  R²=-25373275767715636657378604089344.0000  RMSE=6.826664e-05  n=5164
+
+============================================================

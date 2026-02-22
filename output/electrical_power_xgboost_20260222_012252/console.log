@@ -1,0 +1,61 @@
+============================================================
+XGBoost Energy Prediction — electrical_power_xgboost
+Output: output/electrical_power_xgboost_20260222_012252
+Utility: ELECTRICAL_POWER
+Seed: 42
+============================================================
+
+--- Data Pipeline ---
+Loading building metadata...
+  Buildings with valid area: 1,178
+Loading meter data...
+  Raw meter readings: 0
+  After aggregation: 0
+  After 15-min resample: 0
+  After building join: 0
+  Unique buildings: 0
+Loading weather data...
+  After weather join: 0
+  Outlier removal: 0 rows removed (1st-99th percentile)
+  Final dataset: 0 rows, 0 buildings
+
+--- Feature Engineering ---
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+  Dataset after engineering: 0 rows
+
+--- Train/Test Split ---
+  Train: 0 rows | Test: 0 rows
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+
+--- Training ---
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/xgboost/training.py:200: UserWarning: [01:23:27] WARNING: /__w/xgboost/xgboost/src/common/error_msg.cc:56: Empty dataset at worker: 0
+  bst.update(dtrain, iteration=i, fobj=obj)
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+[0]	validation_0-rmse:0.00000	validation_1-rmse:0.00000
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:3860: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+[50]	validation_0-rmse:0.00000	validation_1-rmse:0.00000
+  TensorBoard logs: output/electrical_power_xgboost_20260222_012252/tensorboard
+
+--- Evaluation ---

@@ -49,7 +49,8 @@ class ExtraTreesParams:
 class EnergyExtraTreesConfig(MLBaseConfig):
     """Top-level config for Extra Trees energy model."""
 
-    name: str = "energy_extra_trees"
+    name: str = "electricity_extra_trees"
+    model_type: str = "extra_trees"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "plots": "plots", "tensorboard": "tensorboard"}

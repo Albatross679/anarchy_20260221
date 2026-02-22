@@ -60,7 +60,8 @@ class XGBoostParams:
 class EnergyXGBoostConfig(MLBaseConfig):
     """Top-level config for XGBoost energy model."""
 
-    name: str = "energy_xgboost"
+    name: str = "electricity_xgboost"
+    model_type: str = "xgboost"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "plots": "plots", "tensorboard": "tensorboard"}

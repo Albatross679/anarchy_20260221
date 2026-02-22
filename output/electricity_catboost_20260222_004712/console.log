@@ -1,0 +1,54 @@
+============================================================
+CatBoost Energy Prediction -- energy_catboost
+Output: output/energy_catboost_20260222_004712
+Utility: ELECTRICITY
+Seed: 42
+============================================================
+
+--- Data Pipeline ---
+Loading building metadata...
+  Buildings with valid area: 1,178
+Loading meter data...
+  Raw meter readings: 692,661
+  After aggregation: 391,801
+  After 15-min resample: 1,567,204
+  After building join: 1,549,636
+  Unique buildings: 265
+Loading weather data...
+  After weather join: 1,544,336
+  Outlier removal: 15,444 rows removed (1st-99th percentile)
+  Final dataset: 1,528,892 rows, 263 buildings
+
+--- Feature Engineering ---
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+  Dataset after engineering: 1,352,156 rows
+
+--- Train/Test Split ---
+  Train: 570,512 rows | Test: 781,644 rows
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+
+--- Training ---
+0:	learn: 0.0002812	test: 0.0002479	best: 0.0002479 (0)	total: 592ms	remaining: 5.33s
+9:	learn: 0.0001839	test: 0.0001590	best: 0.0001590 (9)	total: 4.52s	remaining: 0us
+
+bestTest = 0.0001590247225
+bestIteration = 9
+
+  TensorBoard logs: output/energy_catboost_20260222_004712/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000159
+  MAE:   0.000071
+  R2:    0.6273
+  MAPE:  12597.41%
+  Trees: 9
+
+--- Saving ---
+  Model saved: output/energy_catboost_20260222_004712/checkpoints/model_best.cbm
+  Predictions saved: output/energy_catboost_20260222_004712/predictions.parquet
+
+============================================================
+Done in 103.8s
+Output directory: output/energy_catboost_20260222_004712
+============================================================

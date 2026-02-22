@@ -327,3 +327,157 @@ Did you apply all the new cleaning scripts to all the data with all the utility 
   launch a training instance and activate it on TensorBoard and forward it to my local host through SSH.kill the current tensorboard if there is one currently running.
 
   Can we also add other matrices as neural modals have over epochs?
+
+
+
+Implement all these methods using a similar structure of XGB.
+
+    1. CatBoost — Yandex's gradient boosting library. Handles categorical    
+  features natively (building type, campus, utility type) without encoding.
+   Often matches or beats XGBoost/LightGBM with less tuning. Great for
+  tabular energy data.
+  2. Random Forest (sklearn) — Simple, hard to overfit, provides feature
+  importance out of the box. Good as a baseline and for ensembling with
+  your boosting models.
+  3. Extra Trees (Extremely Randomized Trees) — Like Random Forest but with
+   random split thresholds. Faster to train, can reduce variance further.
+  Good ensemble diversity candidate.
+
+  More specialized options
+
+  4. NGBoost (Natural Gradient Boosting) — Outputs full probability
+  distributions, not just point predictions. Gives you uncertainty
+  estimates per building, which directly maps to the
+  explainability/confidence rubric criteria.
+  5. DART (Dropouts meet Multiple Additive Regression Trees) — Available as
+   a booster type in both XGBoost and LightGBM. Uses dropout to reduce
+  over-specialization of trees. You may already have access to this by
+  changing a config param.
+  6. Quantile Regression Forests — Predict confidence intervals rather than
+   just means. Useful for flagging buildings with high prediction
+  uncertainty.
+
+
+
+Do some research online to see if there is any community Claude code skill that does LaTeX presentation file generation and video generation.
+
+
+Create a report of this project using a markdown format.Look through all the files in this directory.
+You don't have to include any real content yet; just map out the structure. So that I know what should be included in the report document
+
+
+create 2 postprocessing scripts, one for tree based output instances and one for neural based output instances. 
+for tree based: generate loss over rounds, R^2 and all the other metrics over rounds
+for neural based: train and validation loss over epochs, R^2 and all the other metrics over epochs. 
+text-based output: training time, hyperparameters, 
+
+here are examples of the output instances. understand the structure of them. if there is confusion, ask me. if there is other nice suggestions of this postprocessing, let me know
+
+are these naming of training instances correct? because they are only fitting the utilies types of electricity rather than energy in general. double checkl
+
+rename all the xgb, cnn and lstm, and lightgbm and update claude.md
+
+
+make the name of the output folder configurable in the config files. it should be unified in the src folder
+
+
+include also:
+- predict/actual
+- importance over features
+- residual distribution
+- any other you would suggest?
+
+
+run instances of xgboost on all the uitility types. except for   │ COOLING_POWER │ kW      │ 1,464     │
+  ├───────────────┼─────────┼───────────┤
+  │ STEAMRATE     │ kg/hour │ 1,464     │
+  └───────────────┴─────────┴──────────
+
+
+present me all the r^2 across the all the utilities.
+
+do our tree-based method training scripts Use the clean data by default?
+
+I think we should make another data cleaning script that outputs data for tree based method, including all the features that should be added so that we don't need calculate extra feature values in the training scripts.
+
+
+- [] make sure we have this HDD (heating per day)features for gas, perhaps for every tree based data as well..
+
+- [] check if we clean out gas data as we expect 
+
+
+ │ STEAMRATE        │ 1         │ 5,052     │ cleaned               │
+  ├──────────────────┼───────────┼───────────┼───────────────────────┤
+  │ COOLING_POWER    │ 1         │ 5,052     │ raw (no cleaned file) │
+  ├──────────────────┼───────────┼───────────┼───────────────────────┤
+  │ OIL28SEC         │ 1         │ 5,108     │ raw (no cleaned file) │
+  ├──────────────────┼───────────┼───────────┼───────────────────────┤
+  │ ELECTRICAL_POWER │ —         │ —         │ skipped (no data)     │
+  └──────────────────┴───────────┴───────────┴───────────────────────┘
+
+  we don't need this features
+
+
+    Directory: electricity_xgboost_20260222_021830                           
+  Utility: ELECTRICITY
+  Model: XGBoost
+  Time: 02:18
+  ────────────────────────────────────────
+  Directory: cooling_xgboost_20260222_021836
+  Utility: COOLING
+  Model: XGBoost
+  Time: 02:18
+  ────────────────────────────────────────
+  Directory: gas_xgboost_20260222_021833
+  Utility: GAS
+  Model: XGBoost
+  Time: 02:18
+  ────────────────────────────────────────
+  Directory: heat_xgboost_20260222_021837
+  Utility: HEAT
+  Model: XGBoost
+  Time: 02:18
+  ────────────────────────────────────────
+  Directory: steam_xgboost_20260222_021840
+  Utility: STEAM
+  Model: XGBoost
+  Time: 02:18
+
+
+  create a script to compare these 5 outputs. tell me what plots or tables we should include.
+
+
+❯ an idea: should we include the other utility energy comsumption at       
+  the same time as the input feature for gas?                           
+                                                                           
+● That's a really good idea. Gas had the weakest R² by far (0.639 overall, 
+  0.067 median per-building), and there's strong physical intuition for why
+   cross-utility features would help:                                      
+                                               
+  - Gas boilers produce steam and heat — those readings are direct         
+  downstream signals of gas consumption                                    
+  - Electricity usage correlates with occupancy/operational state, which   
+  drives gas demand
+  - Cooling is often inversely related to heating (gas), so it captures
+  seasonal mode-switching
+
+  The main considerations:
+
+  1. Coverage — not all buildings have all utilities. We'd need to handle
+  missing cross-utility features (fill with 0 or NaN + let XGBoost handle
+  it natively via missing=nan)
+  2. Temporal alignment — all utilities are on 15-min intervals, so joining
+   on (simscode, readingtime) should be clean
+  3. Leakage risk — minimal, since we're doing temporal splits and these
+  are concurrent readings, not future values. And for the scoring pipeline
+  we care about residuals, not pure prediction accuracy
+  4. Feature count — could add per co-utility: current value + lag +
+  rolling mean = ~3-5 features each, for up to 4 other utilities
+
+  Want me to implement this? The approach would be:
+  - In the feature engineering step, pivot other utilities for each
+  building at each timestamp into columns like electricity_concurrent,
+  heat_concurrent, etc.
+  - Only for buildings that have both gas + the other utility
+  - Add it as an optional flag (e.g. --cross_utility) so we can A/B test
+  against the current gas model

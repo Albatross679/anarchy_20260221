@@ -1,0 +1,46 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/cooling_xgboost_20260222_021836
+Utility: COOLING
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_cooling.parquet
+  Rows: 439,060 | Features: 27
+  Buildings: 86
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+  Dataset: 439,060 rows
+
+--- Train/Test Split ---
+  Train: 185,848 rows | Test: 253,212 rows
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+
+--- Training ---
+[0]	validation_0-rmse:0.00214	validation_1-rmse:0.00187
+[50]	validation_0-rmse:0.00025	validation_1-rmse:0.00042
+[100]	validation_0-rmse:0.00014	validation_1-rmse:0.00037
+[150]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+[200]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+[250]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+[300]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+[350]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+[361]	validation_0-rmse:0.00013	validation_1-rmse:0.00036
+  TensorBoard logs: output/cooling_xgboost_20260222_021836/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000362
+  MAE:   0.000071
+  R²:    0.9656
+  MAPE:  17316.94%
+  Trees: 312
+
+--- Saving ---
+  Model saved: output/cooling_xgboost_20260222_021836/checkpoints/model_best.json
+  Predictions saved: output/cooling_xgboost_20260222_021836/predictions.parquet
+
+============================================================
+Done in 173.2s
+Output directory: output/cooling_xgboost_20260222_021836
+============================================================

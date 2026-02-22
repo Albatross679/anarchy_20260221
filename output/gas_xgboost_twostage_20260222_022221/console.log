@@ -1,0 +1,99 @@
+============================================================
+Two-Stage XGBoost Gas Model — gas_xgboost_twostage
+Output: output/gas_xgboost_twostage_20260222_022221
+Utility: GAS
+Zero threshold: 1e-09
+Seed: 42
+============================================================
+
+--- Data Pipeline ---
+Loading building metadata...
+  Buildings with valid area: 1,178
+Loading pre-cleaned data from data/cleaned_gas.csv...
+  Cleaned meter readings: 232,644
+  After aggregation: 215,208
+  After 15-min resample: 860,832
+  After building join: 860,832
+  Unique buildings: 147
+Loading weather data...
+  After weather join: 857,892
+  Outlier removal: 8,576 rows removed (1st-99th percentile)
+  Final dataset: 849,316 rows, 147 buildings
+
+--- Feature Engineering ---
+  Features (25): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area']
+  Dataset after engineering: 751,048 rows
+
+--- Zero Analysis ---
+  Total samples: 751,048
+  Zero samples:  481,348 (64.1%)
+  Non-zero:      269,700 (35.9%)
+
+--- Train/Test Split ---
+  Train: 318,768 rows | Test: 432,280 rows
+  Train on/off: 103,264 on / 215,504 off
+  Test on/off:  166,436 on / 265,844 off
+  Auto scale_pos_weight: 2.09
+
+============================================================
+STAGE 1: Training Classifier (on/off)
+============================================================
+[0]	validation_0-logloss:0.65545	validation_1-logloss:0.65836
+[50]	validation_0-logloss:0.18292	validation_1-logloss:0.22862
+[100]	validation_0-logloss:0.15154	validation_1-logloss:0.20282
+[150]	validation_0-logloss:0.14360	validation_1-logloss:0.20071
+[200]	validation_0-logloss:0.13620	validation_1-logloss:0.19895
+[250]	validation_0-logloss:0.12980	validation_1-logloss:0.19854
+[300]	validation_0-logloss:0.12414	validation_1-logloss:0.19785
+[350]	validation_0-logloss:0.11946	validation_1-logloss:0.19696
+[399]	validation_0-logloss:0.11481	validation_1-logloss:0.19765
+  Classifier TensorBoard logs: output/gas_xgboost_twostage_20260222_022221/tensorboard
+
+--- Classifier Evaluation ---
+  Accuracy:  0.9063
+  Precision: 0.8575
+  Recall:    0.9074
+  F1:        0.8817
+  AUC:       0.9761
+
+============================================================
+STAGE 2: Training Regressor (non-zero samples)
+============================================================
+  Non-zero train: 103,264 rows
+  Non-zero test:  166,436 rows
+[0]	validation_0-rmse:0.00020	validation_1-rmse:0.00021
+[50]	validation_0-rmse:0.00010	validation_1-rmse:0.00014
+[100]	validation_0-rmse:0.00010	validation_1-rmse:0.00014
+[150]	validation_0-rmse:0.00010	validation_1-rmse:0.00014
+[151]	validation_0-rmse:0.00010	validation_1-rmse:0.00014
+  Regressor TensorBoard logs: output/gas_xgboost_twostage_20260222_022221/tensorboard/regressor
+
+--- Regressor Evaluation (non-zero subset) ---
+  RMSE:  0.000135
+  MAE:   0.000075
+  R²:    0.6173
+  MAPE:  11117.42%
+  Trees: 102
+
+============================================================
+COMBINED: Two-Stage Pipeline Evaluation
+============================================================
+  SHAP plots saved.
+  Combined R²:   0.5973
+  Combined RMSE: 0.000102
+  Combined MAE:  0.000039
+  R² (non-zero): 0.5454
+  Zero classification accuracy:    0.9056
+  Non-zero classification accuracy: 0.9074
+
+--- Saving ---
+  Classifier saved: output/gas_xgboost_twostage_20260222_022221/checkpoints/classifier_best.json
+  Regressor saved:  output/gas_xgboost_twostage_20260222_022221/checkpoints/regressor_best.json
+  Metrics saved: output/gas_xgboost_twostage_20260222_022221/metrics.json
+  Predictions saved: output/gas_xgboost_twostage_20260222_022221/predictions.parquet
+
+============================================================
+Done in 140.6s
+Output directory: output/gas_xgboost_twostage_20260222_022221
+Combined R²: 0.5973 (vs single-stage 0.65)
+============================================================

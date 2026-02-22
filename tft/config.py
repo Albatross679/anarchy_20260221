@@ -71,7 +71,8 @@ class TFTParams:
 class EnergyTFTConfig(MLBaseConfig):
     """Top-level config for Temporal Fusion Transformer energy model."""
 
-    name: str = "energy_tft"
+    name: str = "electricity_tft"
+    model_type: str = "tft"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "tensorboard": "tensorboard"}

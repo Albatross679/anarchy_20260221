@@ -13,6 +13,8 @@ Functions:
     split_data            -- temporal or random train/test split
 """
 
+import json
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -174,7 +176,25 @@ def build_feature_matrix(
     building_df = load_building_metadata(data_cfg)
     print(f"  Buildings with valid area: {len(building_df):,}")
 
-    if run_cleaning:
+    # Decide data source: pre-cleaned CSV > run_cleaning > raw
+    use_cleaned = getattr(data_cfg, "use_cleaned_data", False)
+    cleaned_dir = getattr(data_cfg, "cleaned_data_dir", "data")
+
+    if use_cleaned:
+        cleaned_path = Path(cleaned_dir) / f"cleaned_{data_cfg.utility_filter.lower()}.csv"
+        if cleaned_path.exists():
+            print(f"Loading pre-cleaned data from {cleaned_path}...")
+            meter_df = pd.read_csv(cleaned_path, low_memory=False)
+            meter_df["readingtime"] = pd.to_datetime(meter_df["readingtime"])
+            meter_df = meter_df.dropna(subset=["readingvalue", "simscode"])
+            meter_df = meter_df[meter_df["readingvalue"] >= 0]
+            meter_df["simscode"] = meter_df["simscode"].astype(int).astype(str)
+            print(f"  Cleaned meter readings: {len(meter_df):,}")
+        else:
+            print(f"  WARNING: cleaned file {cleaned_path} not found, falling back to raw data")
+            use_cleaned = False
+
+    if not use_cleaned and run_cleaning:
         from src.data_cleaner import clean_meter_data
 
         print("Loading raw meter data for cleaning...")
@@ -195,7 +215,8 @@ def build_feature_matrix(
         meter_df = meter_df.dropna(subset=["readingvalue"])
         meter_df = meter_df[meter_df["readingvalue"] >= 0]
         print(f"  After cleaning + utility filter: {len(meter_df):,}")
-    else:
+
+    if not use_cleaned and not run_cleaning:
         # Original path
         print("Loading meter data...")
         meter_df = load_meter_data(data_cfg)
@@ -392,3 +413,73 @@ def split_data(df: pd.DataFrame, cfg: MLBaseConfig):
     print(f"Features ({len(feature_cols)}): {feature_cols}")
 
     return X_train, X_test, y_train, y_test, feature_cols
+
+
+def load_precomputed_tree_features(
+    utility: str,
+    features_dir: str = "data",
+    parquet_path: Optional[str] = None,
+) -> Tuple[pd.DataFrame, List[str]]:
+    """Load pre-computed tree features from parquet + manifest.
+
+    Args:
+        utility: Utility type (e.g. "ELECTRICITY").
+        features_dir: Directory containing parquet and manifest files.
+        parquet_path: Optional explicit path to a parquet file. When provided,
+            the manifest is searched for an entry whose parquet_file matches,
+            or for a ``{UTILITY}_CROSS`` key, falling back to the standard
+            utility key.
+
+    Returns:
+        (df, feature_cols) ready for train/test split.
+    """
+    features_dir = Path(features_dir)
+
+    if parquet_path is not None:
+        parquet_path = Path(parquet_path)
+    else:
+        parquet_path = features_dir / f"tree_features_{utility.lower()}.parquet"
+
+    manifest_path = features_dir / "tree_features_manifest.json"
+
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"Pre-computed features not found: {parquet_path}\n"
+            f"Run: python src/prepare_tree_features.py --utilities {utility}"
+        )
+    if not manifest_path.exists():
+        raise FileNotFoundError(
+            f"Manifest not found: {manifest_path}\n"
+            f"Run: python src/prepare_tree_features.py --utilities {utility}"
+        )
+
+    df = pd.read_parquet(parquet_path)
+    manifest = json.loads(manifest_path.read_text())
+
+    # Find the manifest entry: try matching parquet_file first, then
+    # {UTILITY}_CROSS, then {UTILITY}.
+    utility_key = None
+    for key, entry in manifest.get("utilities", {}).items():
+        if str(parquet_path) == entry.get("parquet_file"):
+            utility_key = key
+            break
+    if utility_key is None:
+        for candidate in [f"{utility.upper()}_CROSS", utility.upper()]:
+            if candidate in manifest.get("utilities", {}):
+                utility_key = candidate
+                break
+
+    if utility_key is None:
+        raise KeyError(
+            f"No manifest entry found for {parquet_path} or utility {utility.upper()}. "
+            f"Available: {list(manifest['utilities'].keys())}"
+        )
+
+    feature_cols = manifest["utilities"][utility_key]["feature_cols"]
+
+    print(f"Loaded pre-computed features from {parquet_path}")
+    print(f"  Manifest key: {utility_key}")
+    print(f"  Rows: {len(df):,} | Features: {len(feature_cols)}")
+    print(f"  Buildings: {df['simscode'].nunique()}")
+
+    return df, feature_cols

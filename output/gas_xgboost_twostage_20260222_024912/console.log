@@ -1,0 +1,110 @@
+============================================================
+Two-Stage XGBoost Gas Model — gas_xgboost_twostage
+Output: output/gas_xgboost_twostage_20260222_024912
+Utility: GAS
+Zero threshold: 1e-05
+Seed: 42
+============================================================
+
+--- Loading Data ---
+  Source: data/tree_features_gas_cross.parquet
+  Loaded: 751,048 rows, 48 columns
+  Buildings: 146
+  Filling NaN in 16 cross-utility columns with 0:
+    electricity_concurrent: 36,112 NaN (4.8%)
+    electricity_lag_4: 36,112 NaN (4.8%)
+    electricity_lag_96: 36,112 NaN (4.8%)
+    electricity_rolling_mean_96: 36,108 NaN (4.8%)
+    heat_concurrent: 479,200 NaN (63.8%)
+    heat_lag_4: 479,204 NaN (63.8%)
+    heat_lag_96: 479,296 NaN (63.8%)
+    heat_rolling_mean_96: 479,200 NaN (63.8%)
+    steam_concurrent: 678,752 NaN (90.4%)
+    steam_lag_4: 678,752 NaN (90.4%)
+    steam_lag_96: 678,752 NaN (90.4%)
+    steam_rolling_mean_96: 678,752 NaN (90.4%)
+    cooling_concurrent: 565,180 NaN (75.3%)
+    cooling_lag_4: 565,180 NaN (75.3%)
+    cooling_lag_96: 565,180 NaN (75.3%)
+    cooling_rolling_mean_96: 565,180 NaN (75.3%)
+  Dataset: 751,048 rows
+  Features (42): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd', 'electricity_concurrent', 'electricity_lag_4', 'electricity_lag_96', 'electricity_rolling_mean_96', 'heat_concurrent', 'heat_lag_4', 'heat_lag_96', 'heat_rolling_mean_96', 'steam_concurrent', 'steam_lag_4', 'steam_lag_96', 'steam_rolling_mean_96', 'cooling_concurrent', 'cooling_lag_4', 'cooling_lag_96', 'cooling_rolling_mean_96']
+
+--- Zero Analysis ---
+  Total samples: 751,048
+  Zero samples:  513,188 (68.3%)
+  Non-zero:      237,860 (31.7%)
+
+--- Train/Test Split ---
+  Train: 318,768 rows | Test: 432,280 rows
+  Train on/off: 89,744 on / 229,024 off
+  Test on/off:  148,116 on / 284,164 off
+  Auto scale_pos_weight: 2.55
+
+============================================================
+STAGE 1: Training Classifier (on/off)
+============================================================
+[0]	validation_0-logloss:0.65537	validation_1-logloss:0.65801
+[50]	validation_0-logloss:0.18956	validation_1-logloss:0.23097
+[100]	validation_0-logloss:0.15872	validation_1-logloss:0.20802
+[150]	validation_0-logloss:0.15186	validation_1-logloss:0.20710
+[200]	validation_0-logloss:0.14491	validation_1-logloss:0.20602
+[250]	validation_0-logloss:0.13777	validation_1-logloss:0.20458
+[300]	validation_0-logloss:0.13234	validation_1-logloss:0.20302
+[350]	validation_0-logloss:0.12709	validation_1-logloss:0.20315
+[359]	validation_0-logloss:0.12605	validation_1-logloss:0.20332
+  Classifier TensorBoard logs: output/gas_xgboost_twostage_20260222_024912/tensorboard
+
+--- Classifier Evaluation ---
+  Accuracy:  0.9077
+  Precision: 0.8347
+  Recall:    0.9112
+  F1:        0.8713
+  AUC:       0.9763
+
+============================================================
+STAGE 2: Training Regressor (non-zero samples)
+============================================================
+  Non-zero train: 89,744 rows
+  Non-zero test:  148,116 rows
+[0]	validation_0-rmse:0.00020	validation_1-rmse:0.00022
+[50]	validation_0-rmse:0.00009	validation_1-rmse:0.00013
+[100]	validation_0-rmse:0.00009	validation_1-rmse:0.00012
+[150]	validation_0-rmse:0.00009	validation_1-rmse:0.00012
+[184]	validation_0-rmse:0.00009	validation_1-rmse:0.00012
+  Regressor TensorBoard logs: output/gas_xgboost_twostage_20260222_024912/tensorboard/regressor
+
+--- Regressor Evaluation (non-zero subset) ---
+  RMSE:  0.000123
+  MAE:   0.000070
+  R²:    0.6909
+  MAPE:  69.36%
+  Trees: 135
+
+============================================================
+COMBINED: Two-Stage Pipeline Evaluation
+============================================================
+  SHAP plots saved.
+  Blending strategies:
+    hard (0/1 gate):        R² = 0.5605
+    soft (prob * reg):       R² = 0.6328
+    optimal (cutoff=0.70):  R² = 0.5876
+  Best strategy: soft
+  Combined R²:   0.6328
+  Combined RMSE: 0.000098
+  Combined MAE:  0.000041
+  R² (non-zero): 0.5885
+  Zero classification accuracy:    0.9060
+  Non-zero classification accuracy: 0.9112
+
+--- Saving ---
+  Classifier saved: output/gas_xgboost_twostage_20260222_024912/checkpoints/classifier_best.json
+  Regressor saved:  output/gas_xgboost_twostage_20260222_024912/checkpoints/regressor_best.json
+  Metrics saved: output/gas_xgboost_twostage_20260222_024912/metrics.json
+  Predictions saved: output/gas_xgboost_twostage_20260222_024912/predictions.parquet (blend_mode=soft)
+
+============================================================
+Done in 152.3s
+Output directory: output/gas_xgboost_twostage_20260222_024912
+Combined R²: 0.6328 (vs single-stage 0.65)
+============================================================

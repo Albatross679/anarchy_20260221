@@ -1,0 +1,20 @@
+{
+  "rmse": 1.0297639005216235e-11,
+  "mae": 3.811327189143644e-13,
+  "r2": -0.001371742112483032,
+  "mape_pct": 100.0,
+  "n_test": 2920,
+  "n_trees_used": 1,
+  "top_features": {
+    "temperature_2m": 0.0,
+    "relative_humidity_2m": 0.0,
+    "dew_point_2m": 0.0,
+    "direct_radiation": 0.0,
+    "wind_speed_10m": 0.0,
+    "cloud_cover": 0.0,
+    "apparent_temperature": 0.0,
+    "precipitation": 0.0,
+    "grossarea": 0.0,
+    "floorsaboveground": 0.0
+  }
+}

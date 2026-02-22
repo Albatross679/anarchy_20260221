@@ -1,0 +1,40 @@
+{
+  "classifier": {
+    "accuracy": 0.9120523734616452,
+    "precision": 0.8544733351363185,
+    "recall": 0.8959059115828135,
+    "f1": 0.8746992558023031,
+    "auc": 0.9756149592546702,
+    "n_test": 432280,
+    "n_positive": 148116,
+    "n_negative": 284164
+  },
+  "regressor": {
+    "rmse": 0.00012512005533678544,
+    "mae": 6.985995280312908e-05,
+    "r2": 0.6824598215948257,
+    "mape_pct": 67.42184547868794,
+    "n_test_on": 148116,
+    "n_trees_used": 102
+  },
+  "combined": {
+    "best_strategy": "soft",
+    "combined_rmse": 9.760119192955385e-05,
+    "combined_mae": 3.970642134014058e-05,
+    "combined_r2": 0.634136481114728,
+    "r2_hard": 0.5706326777113586,
+    "r2_soft": 0.634136481114728,
+    "r2_optimal_threshold": 0.5869468043066648,
+    "optimal_prob_cutoff": 0.7000000000000001,
+    "r2_nonzero_subset": 0.5673469410717211,
+    "zero_classification_accuracy": 0.920468461874129,
+    "nonzero_classification_accuracy": 0.8959059115828135,
+    "n_test": 432280,
+    "n_true_zeros": 284164,
+    "n_true_nonzeros": 148116,
+    "n_pred_zeros": 276982,
+    "n_pred_nonzeros": 155298
+  },
+  "zero_threshold": 1e-05,
+  "zero_pct_total": 68.32958745646084
+}

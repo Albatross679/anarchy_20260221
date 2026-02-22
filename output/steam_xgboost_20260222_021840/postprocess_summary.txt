@@ -1,0 +1,83 @@
+============================================================
+POSTPROCESSING REPORT — XGBoost
+Output directory: output/steam_xgboost_20260222_021840
+============================================================
+
+--- Training Summary ---
+  Model type:     XGBoost
+  Training time:  92.6s
+  Seed:           42
+  Utility:        STEAM
+
+--- Hyperparameters ---
+  n_estimators: 1000
+  max_depth: 7
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  min_child_weight: 5
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+  tree_method: hist
+  early_stopping_rounds: 50
+  eval_metric: rmse
+
+--- Data Configuration ---
+  Split type:       Temporal
+  Split date:       2025-10-01
+  Lag hours:        [1, 6, 24, 168]
+  Rolling windows:  [24, 168]
+  Interactions:     True
+
+--- Final Evaluation Metrics ---
+  RMSE:           0.0028765019701569305
+  MAE:            0.0008338992912924553
+  R²:             0.9646153284542891
+  MAPE:           8095.066839199447%
+  Test samples:   72708
+  Trees used:     195
+
+--- Top 10 Feature Importances ---
+   1. energy_lag_4                    0.6622741222381592
+   2. rolling_mean_96                 0.2651791572570801
+   3. building_age                    0.012011390179395676
+   4. floorsaboveground               0.011729242280125618
+   5. energy_lag_24                   0.01128567848354578
+   6. rolling_mean_672                0.010205176658928394
+   7. grossarea                       0.006388499867171049
+   8. energy_lag_96                   0.005914411041885614
+   9. energy_lag_672                  0.005098700523376465
+  10. rolling_std_672                 0.0015062742168083787
+
+--- Training Rounds Summary ---
+  Total rounds logged:  6
+  First round:          0.0
+  Last round:           244.0
+  Best val RMSE:        2.880000e-03 (round 200)
+  Final train RMSE:     7.900000e-04
+  Final val RMSE:       2.890000e-03
+  Train-Val gap:        2.100000e-03 (overfitting)
+
+--- Per-Building Performance ---
+  Buildings evaluated:  26
+  Median R²:            0.5274
+  Mean R²:              -5.0418
+  R² range:             [-139.2998, 0.8202]
+  Buildings with R²>0.9: 0
+  Buildings with R²<0:   6
+
+  Top 5 buildings (best R²):
+           136  R²=0.8202  RMSE=2.894430e-05  n=5164
+            89  R²=0.8175  RMSE=3.933721e-05  n=5164
+            69  R²=0.7850  RMSE=4.150368e-03  n=5164
+           297  R²=0.7733  RMSE=4.155598e-05  n=5164
+           353  R²=0.7187  RMSE=2.184337e-05  n=5164
+
+  Bottom 5 buildings (worst R²):
+           276  R²=-0.1455  RMSE=4.833884e-05  n=3080
+           157  R²=-0.7040  RMSE=1.848498e-04  n=5164
+           249  R²=-0.9926  RMSE=3.698330e-04  n=5164
+            88  R²=-1.1688  RMSE=8.854526e-06  n=5164
+          1018  R²=-139.2998  RMSE=1.778804e-06  n=5164
+
+============================================================

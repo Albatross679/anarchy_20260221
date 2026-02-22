@@ -1,0 +1,43 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/steam_xgboost_20260222_021840
+Utility: STEAM
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_steam.parquet
+  Rows: 127,552 | Features: 27
+  Buildings: 26
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+  Dataset: 127,552 rows
+
+--- Train/Test Split ---
+  Train: 54,844 rows | Test: 72,708 rows
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+
+--- Training ---
+[0]	validation_0-rmse:0.01235	validation_1-rmse:0.01461
+[50]	validation_0-rmse:0.00158	validation_1-rmse:0.00341
+[100]	validation_0-rmse:0.00103	validation_1-rmse:0.00294
+[150]	validation_0-rmse:0.00089	validation_1-rmse:0.00289
+[200]	validation_0-rmse:0.00081	validation_1-rmse:0.00288
+[244]	validation_0-rmse:0.00079	validation_1-rmse:0.00289
+  TensorBoard logs: output/steam_xgboost_20260222_021840/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.002877
+  MAE:   0.000834
+  R²:    0.9646
+  MAPE:  8095.07%
+  Trees: 195
+
+--- Saving ---
+  Model saved: output/steam_xgboost_20260222_021840/checkpoints/model_best.json
+  Predictions saved: output/steam_xgboost_20260222_021840/predictions.parquet
+
+============================================================
+Done in 92.6s
+Output directory: output/steam_xgboost_20260222_021840
+============================================================

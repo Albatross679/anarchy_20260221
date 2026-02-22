@@ -79,7 +79,8 @@ class CNNParams:
 class EnergyCNNConfig(MLBaseConfig):
     """Top-level config for CNN energy model. Mirrors EnergyModelConfig layout."""
 
-    name: str = "energy_cnn"
+    name: str = "electricity_cnn"
+    model_type: str = "cnn"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "tensorboard": "tensorboard"}

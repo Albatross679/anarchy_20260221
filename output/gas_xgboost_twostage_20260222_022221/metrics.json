@@ -1,0 +1,35 @@
+{
+  "classifier": {
+    "accuracy": 0.906280651429629,
+    "precision": 0.8575103201957857,
+    "recall": 0.90735778317191,
+    "f1": 0.8817300983514671,
+    "auc": 0.976132127989707,
+    "n_test": 432280,
+    "n_positive": 166436,
+    "n_negative": 265844
+  },
+  "regressor": {
+    "rmse": 0.00013521351078330627,
+    "mae": 7.537253635000852e-05,
+    "r2": 0.617321995653159,
+    "mape_pct": 11117.415328853873,
+    "n_test_on": 166436,
+    "n_trees_used": 102
+  },
+  "combined": {
+    "combined_rmse": 0.00010240021212709136,
+    "combined_mae": 3.871774262766309e-05,
+    "combined_r2": 0.5972731576934445,
+    "r2_nonzero_subset": 0.545406663182566,
+    "zero_classification_accuracy": 0.9056062954213749,
+    "nonzero_classification_accuracy": 0.90735778317191,
+    "n_test": 432280,
+    "n_true_zeros": 265844,
+    "n_true_nonzeros": 166436,
+    "n_pred_zeros": 256169,
+    "n_pred_nonzeros": 176111
+  },
+  "zero_threshold": 1e-09,
+  "zero_pct_total": 64.09017799128685
+}

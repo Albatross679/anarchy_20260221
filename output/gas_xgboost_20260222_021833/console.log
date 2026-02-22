@@ -1,0 +1,43 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/gas_xgboost_20260222_021833
+Utility: GAS
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_gas.parquet
+  Rows: 751,048 | Features: 27
+  Buildings: 146
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+  Dataset: 751,048 rows
+
+--- Train/Test Split ---
+  Train: 318,768 rows | Test: 432,280 rows
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+
+--- Training ---
+[0]	validation_0-rmse:0.00013	validation_1-rmse:0.00016
+[50]	validation_0-rmse:0.00007	validation_1-rmse:0.00010
+[100]	validation_0-rmse:0.00006	validation_1-rmse:0.00010
+[150]	validation_0-rmse:0.00006	validation_1-rmse:0.00010
+[200]	validation_0-rmse:0.00006	validation_1-rmse:0.00010
+[215]	validation_0-rmse:0.00006	validation_1-rmse:0.00010
+  TensorBoard logs: output/gas_xgboost_20260222_021833/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000097
+  MAE:   0.000037
+  R²:    0.6394
+  MAPE:  5516.66%
+  Trees: 166
+
+--- Saving ---
+  Model saved: output/gas_xgboost_20260222_021833/checkpoints/model_best.json
+  Predictions saved: output/gas_xgboost_20260222_021833/predictions.parquet
+
+============================================================
+Done in 143.3s
+Output directory: output/gas_xgboost_20260222_021833
+============================================================

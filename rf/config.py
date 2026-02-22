@@ -55,7 +55,8 @@ class RandomForestParams:
 class EnergyRandomForestConfig(MLBaseConfig):
     """Top-level config for Random Forest energy model."""
 
-    name: str = "energy_random_forest"
+    name: str = "electricity_random_forest"
+    model_type: str = "random_forest"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "plots": "plots", "tensorboard": "tensorboard"}

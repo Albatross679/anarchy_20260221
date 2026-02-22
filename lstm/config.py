@@ -80,7 +80,8 @@ class LSTMParams:
 class EnergyLSTMConfig(MLBaseConfig):
     """Top-level config for hybrid LSTM energy model."""
 
-    name: str = "energy_lstm"
+    name: str = "electricity_lstm"
+    model_type: str = "lstm"
     output: OutputDir = field(
         default_factory=lambda: OutputDir(
             subdirs={"checkpoints": "checkpoints", "tensorboard": "tensorboard"}

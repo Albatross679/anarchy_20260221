@@ -65,7 +65,6 @@ def main():
         cfg.seed = args.seed
     if args.utility:
         cfg.data.utility_filter = args.utility
-        cfg.name = f"energy_tft_{args.utility.lower()}"
     if args.seq_length is not None:
         cfg.data.seq_length = args.seq_length
     if args.epochs is not None:

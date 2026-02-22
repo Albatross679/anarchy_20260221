@@ -1,0 +1,46 @@
+{
+  "classifier": {
+    "accuracy": 0.8950792287693955,
+    "precision": 0.8840760936410971,
+    "recall": 0.8736528644356211,
+    "f1": 0.8788335744706866,
+    "auc": 0.9640926620562369,
+    "n_test": 340028,
+    "n_positive": 148092,
+    "n_negative": 191936
+  },
+  "regressor": {
+    "rmse": 0.00014143576023884727,
+    "mae": 7.295115839509127e-05,
+    "r2": 0.5942635660633504,
+    "mape_pct": 47.30674668224882,
+    "n_test_on": 148092,
+    "n_trees_used": 88
+  },
+  "combined_active": {
+    "best_strategy": "soft",
+    "combined_rmse": 0.00011422351373443366,
+    "combined_mae": 4.79243427058452e-05,
+    "combined_r2": 0.5851305026275254,
+    "r2_hard": 0.5575770938340021,
+    "r2_soft": 0.5851305026275254,
+    "r2_optimal_threshold": 0.5622186682359551,
+    "optimal_prob_cutoff": 0.4,
+    "r2_nonzero_subset": 0.45334601150984666,
+    "zero_classification_accuracy": 0.911611162054018,
+    "nonzero_classification_accuracy": 0.8736528644356211,
+    "n_test": 340028,
+    "n_true_zeros": 191936,
+    "n_true_nonzeros": 148092,
+    "n_pred_zeros": 193682,
+    "n_pred_nonzeros": 146346
+  },
+  "overall_r2": 0.6057040742541422,
+  "zero_threshold": 1e-05,
+  "zero_pct_active": 59.75619661301458,
+  "n_buildings_total": 146,
+  "n_buildings_active": 115,
+  "n_buildings_always_off": 31,
+  "log_target": true,
+  "parquet_source": "data/tree_features_gas_cross.parquet"
+}

@@ -1,0 +1,42 @@
+============================================================
+XGBoost Energy Prediction — electricity_xgboost
+Output: output/heat_xgboost_20260222_021837
+Utility: HEAT
+Seed: 42
+============================================================
+
+--- Loading Pre-computed Features ---
+Loaded pre-computed features from data/tree_features_heat.parquet
+  Rows: 660,900 | Features: 27
+  Buildings: 129
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+  Dataset: 660,900 rows
+
+--- Train/Test Split ---
+  Train: 279,932 rows | Test: 380,968 rows
+  Features (27): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'grossarea', 'floorsaboveground', 'building_age', 'hour_of_day', 'minute_of_hour', 'day_of_week', 'is_weekend', 'energy_lag_4', 'energy_lag_24', 'energy_lag_96', 'energy_lag_672', 'rolling_mean_96', 'rolling_std_96', 'rolling_mean_672', 'rolling_std_672', 'temp_x_area', 'humidity_x_area', 'hdd', 'cdd']
+
+--- Training ---
+[0]	validation_0-rmse:0.00010	validation_1-rmse:0.00011
+[50]	validation_0-rmse:0.00003	validation_1-rmse:0.00004
+[100]	validation_0-rmse:0.00002	validation_1-rmse:0.00003
+[150]	validation_0-rmse:0.00002	validation_1-rmse:0.00003
+[155]	validation_0-rmse:0.00002	validation_1-rmse:0.00003
+  TensorBoard logs: output/heat_xgboost_20260222_021837/tensorboard
+
+--- Evaluation ---
+  SHAP plots saved.
+  RMSE:  0.000033
+  MAE:   0.000017
+  R²:    0.9202
+  MAPE:  158376.04%
+  Trees: 106
+
+--- Saving ---
+  Model saved: output/heat_xgboost_20260222_021837/checkpoints/model_best.json
+  Predictions saved: output/heat_xgboost_20260222_021837/predictions.parquet
+
+============================================================
+Done in 110.9s
+Output directory: output/heat_xgboost_20260222_021837
+============================================================
