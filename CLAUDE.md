@@ -48,6 +48,7 @@ src/
 - `model/` — saved model weights
 - `doc/` — info packet, challenge documentation, and model specs
   - `doc/CNN_MODEL.md` — CNN model input/output specification
+  - `doc/XGB_MODEL.md` — XGBoost model input/output specification
 
 ## Data Schema
 
