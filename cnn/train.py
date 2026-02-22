@@ -30,7 +30,6 @@ from cnn.model import (
     create_model,
     evaluate_model,
     get_predictions,
-    save_model,
     train_model,
 )
 from src.data_loader import build_feature_matrix
@@ -47,6 +46,7 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=None, help="Batch size")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
     parser.add_argument("--no-early-stop", action="store_true", help="Disable early stopping")
+    parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
     return parser.parse_args()
 
 
@@ -145,6 +145,9 @@ def main():
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
+            save_every=cfg.checkpointing.save_every_n_epochs,
+            tb_cfg=cfg.tensorboard,
+            resume_from=args.resume_from,
         )
 
         # 6. Evaluate (logs eval metrics to TensorBoard)
@@ -158,13 +161,7 @@ def main():
         print(f"  R²:    {metrics['r2']:.4f}")
         print(f"  MAPE:  {metrics['mape_pct']:.2f}%")
 
-        # 7. Save model
-        if cfg.checkpointing.enabled:
-            model_path = run_dir / "checkpoints" / cfg.checkpointing.best_filename
-            save_model(model, scaler_stats, model_path)
-            print(f"\n  Model saved: {model_path}")
-
-        # 9. Generate predictions
+        # 7. Generate predictions
         print("\n--- Generating Predictions ---")
         df_with_preds = get_predictions(
             model, df, feature_cols, data_cfg, device, scaler_stats

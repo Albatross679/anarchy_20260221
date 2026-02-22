@@ -18,7 +18,7 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.config import DataConfig, EnergyModelConfig
+from src.config import DataConfig, MLBaseConfig
 
 
 def load_meter_data(cfg: DataConfig) -> pd.DataFrame:
@@ -120,17 +120,36 @@ def load_weather_data(cfg: DataConfig) -> pd.DataFrame:
     return df
 
 
+def resample_to_15min(df: pd.DataFrame) -> pd.DataFrame:
+    """Upsample hourly meter readings to 15-minute intervals.
+
+    Each hourly reading is split into 4 equal 15-min readings at
+    :00, :15, :30, :45.  readingvalue is divided by 4.
+    """
+    offsets = pd.to_timedelta([0, 15, 30, 45], unit="min")
+    repeated = pd.concat([df] * 4, ignore_index=True)
+    n = len(df)
+    offset_col = np.concatenate([np.full(n, off.total_seconds()) for off in offsets])
+    repeated["readingtime"] = (
+        repeated["readingtime"] + pd.to_timedelta(offset_col, unit="s")
+    )
+    repeated["readingvalue"] = repeated["readingvalue"] / 4.0
+    repeated = repeated.sort_values(["simscode", "readingtime"]).reset_index(drop=True)
+    return repeated
+
+
 def engineer_time_features(df: pd.DataFrame) -> pd.DataFrame:
     """Add time-based features from readingtime."""
     df = df.copy()
     df["hour_of_day"] = df["readingtime"].dt.hour
+    df["minute_of_hour"] = df["readingtime"].dt.minute
     df["day_of_week"] = df["readingtime"].dt.dayofweek
     df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
     return df
 
 
 def build_feature_matrix(
-    cfg: EnergyModelConfig,
+    cfg: MLBaseConfig,
     run_cleaning: bool = False,
 ) -> pd.DataFrame:
     """
@@ -184,6 +203,10 @@ def build_feature_matrix(
 
     meter_df = aggregate_building_meters(meter_df)
     print(f"  After aggregation: {len(meter_df):,}")
+
+    # Upsample hourly readings to 15-minute intervals
+    meter_df = resample_to_15min(meter_df)
+    print(f"  After 15-min resample: {len(meter_df):,}")
 
     # Determine join key: use resolved_buildingnumber if available
     if "resolved_buildingnumber" in meter_df.columns:
@@ -239,7 +262,7 @@ def build_feature_matrix(
 
 
 def build_multi_utility_matrix(
-    cfg: EnergyModelConfig,
+    cfg: MLBaseConfig,
     utilities: Optional[List[str]] = None,
 ) -> Tuple[Dict[str, pd.DataFrame], "CleaningReport"]:
     """Clean data once, then build per-utility feature matrices.
@@ -289,6 +312,7 @@ def build_multi_utility_matrix(
             continue
 
         udf = aggregate_building_meters(udf)
+        udf = resample_to_15min(udf)
 
         # Determine join key
         if "resolved_buildingnumber" in udf.columns:
@@ -334,7 +358,7 @@ def build_multi_utility_matrix(
     return results, report
 
 
-def split_data(df: pd.DataFrame, cfg: EnergyModelConfig):
+def split_data(df: pd.DataFrame, cfg: MLBaseConfig):
     """
     Split into train/test.
     Temporal split (default): train on data before split_date, test on data after.

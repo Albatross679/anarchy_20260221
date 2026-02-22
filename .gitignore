@@ -20,7 +20,7 @@ build/
 Thumbs.db
 
 # Project
-output/
+# output/
 model/
 # .claude/
 

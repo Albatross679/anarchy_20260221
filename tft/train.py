@@ -50,6 +50,7 @@ def parse_args():
     parser.add_argument("--num-heads", type=int, default=None, help="Attention heads")
     parser.add_argument("--num-lstm-layers", type=int, default=None, help="LSTM layers in TFT")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
+    parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
     return parser.parse_args()
 
 
@@ -155,6 +156,8 @@ def main():
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
+            tb_cfg=cfg.tensorboard,
+            resume_from=args.resume_from,
         )
 
         # 7. Evaluate (logs eval metrics to TensorBoard)

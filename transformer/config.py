@@ -12,12 +12,15 @@ from src.config import (
     OutputDir,
     ConsoleLogging,
     Checkpointing,
+    TensorBoardConfig,
     DataConfig,
     # Re-export helpers so transformer/train.py can import from one place
     save_config,
     load_config,
     setup_output_dir,
     setup_console_logging,
+    get_system_metrics,
+    log_system_metrics_to_tb,
 )
 
 

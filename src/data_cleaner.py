@@ -6,7 +6,9 @@ Cleaning steps (executed in order):
     2. exclude_utilities       -- drop OIL28SEC (100% zeros)
     3. exclude_unmatched_buildings -- drop simscodes 8, 43, 93 (no metadata)
     4. apply_hard_caps         -- drop sensor-fault outliers per utility
-    5. impute_short_gaps       -- ffill/bfill gaps up to 2 hours
+    5. impute_short_gaps       -- ffill/bfill gaps up to 8 hours
+    6. drop_dead_meters        -- drop meters that are 100% NaN
+    7. drop_sparse_meters      -- drop meters with >50% NaN (long outages)
 
 Orchestrator:
     clean_meter_data          -- runs all steps, returns (cleaned_df, report)
@@ -35,7 +37,7 @@ UTILITY_HARD_CAPS: Dict[str, float] = {
 
 EXCLUDED_UTILITIES = {"OIL28SEC"}
 EXCLUDED_SIMSCODES = {"8", "43", "93"}
-FFILL_GAP_LIMIT = 8  # 2 hours at 15-min intervals
+FFILL_GAP_LIMIT = 8  # 8 hours at hourly intervals (applied before 15-min resample)
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +54,10 @@ class CleaningReport:
     excluded_buildings_dropped: int = 0
     outliers_removed: Dict[str, int] = field(default_factory=dict)
     intervals_filled: int = 0
+    dead_meters_dropped: int = 0
+    dead_meter_rows_dropped: int = 0
+    sparse_meters_dropped: int = 0
+    sparse_meter_rows_dropped: int = 0
     gaps_remaining: int = 0
 
     @property
@@ -71,6 +77,8 @@ class CleaningReport:
         for util, count in sorted(self.outliers_removed.items()):
             lines.append(f"  {util}: {count:,}")
         lines.append(f"Intervals filled:         {self.intervals_filled:,}")
+        lines.append(f"Dead meters dropped:      {self.dead_meters_dropped:,} ({self.dead_meter_rows_dropped:,} rows)")
+        lines.append(f"Sparse meters dropped:    {self.sparse_meters_dropped:,} ({self.sparse_meter_rows_dropped:,} rows)")
         lines.append(f"Gaps remaining (NaN):     {self.gaps_remaining:,}")
         return "\n".join(lines)
 
@@ -175,6 +183,67 @@ def impute_short_gaps(
 
 
 # ---------------------------------------------------------------------------
+# Step 6: Drop dead meters (100% NaN)
+# ---------------------------------------------------------------------------
+
+
+def drop_dead_meters(df: pd.DataFrame, report: CleaningReport) -> pd.DataFrame:
+    """Drop meters where every readingvalue is NaN (dead/offline meters)."""
+    group_cols = ["meterid", "simscode", "utility"]
+    nan_frac = df.groupby(group_cols)["readingvalue"].apply(
+        lambda s: s.isna().all()
+    )
+    dead_keys = nan_frac[nan_frac].reset_index()[group_cols]
+
+    if len(dead_keys) == 0:
+        return df
+
+    report.dead_meters_dropped = len(dead_keys)
+
+    # Tag rows to drop via merge
+    dead_keys["_dead"] = True
+    merged = df.merge(dead_keys, on=group_cols, how="left")
+    keep = merged["_dead"].isna()
+    report.dead_meter_rows_dropped = int((~keep).sum())
+    return df[keep.values].copy()
+
+
+# ---------------------------------------------------------------------------
+# Step 7: Drop sparse meters (>50% NaN after imputation)
+# ---------------------------------------------------------------------------
+
+SPARSE_THRESHOLD = 0.5  # drop meters with more than 50% NaN
+
+
+def drop_sparse_meters(
+    df: pd.DataFrame,
+    report: CleaningReport,
+    threshold: float = SPARSE_THRESHOLD,
+) -> pd.DataFrame:
+    """Drop meters where NaN fraction exceeds threshold (long outages)."""
+    group_cols = ["meterid", "simscode", "utility"]
+    nan_frac = df.groupby(group_cols)["readingvalue"].apply(
+        lambda s: s.isna().mean()
+    )
+    sparse_keys = nan_frac[nan_frac > threshold].reset_index()[group_cols]
+
+    if len(sparse_keys) == 0:
+        return df
+
+    report.sparse_meters_dropped = len(sparse_keys)
+
+    sparse_keys["_sparse"] = True
+    merged = df.merge(sparse_keys, on=group_cols, how="left")
+    keep = merged["_sparse"].isna()
+    report.sparse_meter_rows_dropped = int((~keep).sum())
+
+    # Update remaining NaN count
+    remaining = df[keep.values]
+    report.gaps_remaining = int(remaining["readingvalue"].isna().sum())
+    return remaining.copy()
+
+
+# ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
 
@@ -204,6 +273,9 @@ def clean_meter_data(
     df = exclude_unmatched_buildings(df, report)
     df = apply_hard_caps(df, report, caps=caps)
     df = impute_short_gaps(df, report, gap_limit=gap_limit)
+    df = drop_dead_meters(df, report)
+    df = drop_sparse_meters(df, report)
 
+    report.gaps_remaining = int(df["readingvalue"].isna().sum())
     report.rows_after = len(df)
     return df, report

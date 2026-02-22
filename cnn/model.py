@@ -21,13 +21,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import psutil
 import torch
 import torch.nn as nn
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 
-from cnn.config import CNNDataConfig, CNNParams
+from cnn.config import CNNDataConfig, CNNParams, TensorBoardConfig, log_system_metrics_to_tb
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +134,22 @@ class EnergyCNN(nn.Module):
         super().__init__()
         self.n_features = n_features
         self.seq_length = seq_length
+
+        # Validate conv_channels and kernel_sizes have matching lengths
+        if len(params.conv_channels) != len(params.kernel_sizes):
+            raise ValueError(
+                f"conv_channels ({len(params.conv_channels)}) and "
+                f"kernel_sizes ({len(params.kernel_sizes)}) must have the same length"
+            )
+
+        # Validate seq_length is large enough to survive MaxPool layers
+        n_pools = len(params.conv_channels)
+        min_seq = 2 ** n_pools
+        if seq_length < min_seq:
+            raise ValueError(
+                f"seq_length={seq_length} is too short for {n_pools} MaxPool1d(2) layers; "
+                f"minimum is {min_seq}"
+            )
 
         act_fn = {
             "relu": nn.ReLU,
@@ -251,8 +268,24 @@ def train_model(
     data_cfg: CNNDataConfig,
     device: torch.device,
     run_dir: Optional[Path] = None,
+    save_every: int = 5,
+    tb_cfg: Optional[TensorBoardConfig] = None,
+    resume_from: Optional[str | Path] = None,
 ) -> EnergyCNN:
-    """Train with AdamW, LR scheduler, early stopping, and TensorBoard logging."""
+    """Train with AdamW, LR scheduler, early stopping, and TensorBoard logging.
+
+    Checkpoint saving (requires run_dir):
+    - Every ``save_every`` epochs  -> checkpoints/epoch_{N}.pt
+    - Best validation loss         -> checkpoints/model_best.pt
+    - Final model (after training) -> checkpoints/model_final.pt
+
+    Resume: pass ``resume_from`` path to a checkpoint containing
+    optimizer_state_dict, scheduler_state_dict, epoch, and best_val_loss.
+    """
+    scaler_stats_for_ckpt = train_dataset.scaler_stats
+    ckpt_dir = (run_dir / "checkpoints") if run_dir else None
+    if ckpt_dir:
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
     train_loader = DataLoader(
         train_dataset,
         batch_size=data_cfg.batch_size,
@@ -293,12 +326,53 @@ def train_model(
     else:
         scheduler = None
 
+    # Resume from checkpoint
+    start_epoch = 1
     best_val_loss = float("inf")
+    if resume_from is not None:
+        ckpt = torch.load(resume_from, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model_state_dict"])
+        if "optimizer_state_dict" in ckpt:
+            optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if scheduler is not None and "scheduler_state_dict" in ckpt:
+            scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+        start_epoch = ckpt.get("epoch", 0) + 1
+        best_val_loss = ckpt.get("best_val_loss", float("inf"))
+        print(f"  Resumed from {resume_from} (epoch {start_epoch - 1}, best_val_loss={best_val_loss:.6f})")
+
+    if tb_cfg is None:
+        tb_cfg = TensorBoardConfig()
+
+    # Log hyperparameters as text at training start
+    if writer and tb_cfg.log_hparams_text and start_epoch == 1:
+        hparam_text = (
+            f"| Param | Value |\n|---|---|\n"
+            f"| learning_rate | {params.learning_rate} |\n"
+            f"| weight_decay | {params.weight_decay} |\n"
+            f"| epochs | {params.epochs} |\n"
+            f"| conv_channels | {params.conv_channels} |\n"
+            f"| kernel_sizes | {params.kernel_sizes} |\n"
+            f"| fc_dims | {params.fc_dims} |\n"
+            f"| dropout_conv | {params.dropout_conv} |\n"
+            f"| dropout_fc | {params.dropout_fc} |\n"
+            f"| pool_size | {params.pool_size} |\n"
+            f"| batch_norm | {params.use_batch_norm} |\n"
+            f"| activation | {params.activation} |\n"
+            f"| scheduler | {params.scheduler} |\n"
+            f"| seq_length | {data_cfg.seq_length} |\n"
+            f"| batch_size | {data_cfg.batch_size} |\n"
+            f"| stride | {data_cfg.stride} |\n"
+        )
+        writer.add_text("hyperparameters", hparam_text, 0)
+
+    # Initialize CPU monitoring baseline
+    psutil.cpu_percent(interval=None)
+
     patience_counter = 0
     best_state = None
     train_start = _time.time()
 
-    for epoch in range(1, params.epochs + 1):
+    for epoch in range(start_epoch, params.epochs + 1):
         epoch_start = _time.time()
 
         # --- Train ---
@@ -351,8 +425,11 @@ def train_model(
             writer.add_scalar("time/epoch_seconds", epoch_time, epoch)
             writer.add_scalar("time/wall_clock_seconds", wall_clock, epoch)
 
-            # Weight and gradient histograms every 5 epochs
-            if epoch % 5 == 0 or epoch == 1:
+            # System metrics (CPU, GPU, VRAM) — config-driven
+            log_system_metrics_to_tb(writer, tb_cfg, epoch)
+
+            # Weight and gradient histograms
+            if tb_cfg.log_histograms and (epoch % tb_cfg.histogram_every_n_epochs == 0 or epoch == 1):
                 for name, param in model.named_parameters():
                     writer.add_histogram(f"weights/{name}", param.data, epoch)
                     if param.grad is not None:
@@ -366,8 +443,23 @@ def train_model(
             best_val_loss = val_loss
             patience_counter = 0
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            # Save best checkpoint to disk
+            if ckpt_dir:
+                save_model(
+                    model, scaler_stats_for_ckpt, ckpt_dir / "model_best.pt",
+                    optimizer=optimizer, scheduler=scheduler,
+                    epoch=epoch, best_val_loss=best_val_loss,
+                )
         else:
             patience_counter += 1
+
+        # Periodic checkpoint every N epochs
+        if ckpt_dir and epoch % save_every == 0:
+            save_model(
+                model, scaler_stats_for_ckpt, ckpt_dir / f"epoch_{epoch}.pt",
+                optimizer=optimizer, scheduler=scheduler,
+                epoch=epoch, best_val_loss=best_val_loss,
+            )
 
         if epoch % 5 == 0 or epoch == 1:
             print(
@@ -380,6 +472,14 @@ def train_model(
         if patience_counter >= params.early_stopping_patience:
             print(f"  Early stopping at epoch {epoch}")
             break
+
+    # Save final model (last epoch state, before restoring best)
+    if ckpt_dir:
+        save_model(
+            model, scaler_stats_for_ckpt, ckpt_dir / "model_final.pt",
+            optimizer=optimizer, scheduler=scheduler,
+            epoch=epoch, best_val_loss=best_val_loss,
+        )
 
     # Restore best weights
     if best_state is not None:
@@ -514,19 +614,27 @@ def save_model(
     model: EnergyCNN,
     scaler_stats: dict,
     path: str | Path,
+    optimizer=None,
+    scheduler=None,
+    epoch: int = 0,
+    best_val_loss: float = float("inf"),
 ) -> None:
-    """Save model state_dict and scaler stats."""
+    """Save model state_dict, scaler stats, and optionally optimizer/scheduler/epoch."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(
-        {
-            "model_state_dict": model.state_dict(),
-            "scaler_stats": scaler_stats,
-            "n_features": model.n_features,
-            "seq_length": model.seq_length,
-        },
-        path,
-    )
+    ckpt = {
+        "model_state_dict": model.state_dict(),
+        "scaler_stats": scaler_stats,
+        "n_features": model.n_features,
+        "seq_length": model.seq_length,
+        "epoch": epoch,
+        "best_val_loss": best_val_loss,
+    }
+    if optimizer is not None:
+        ckpt["optimizer_state_dict"] = optimizer.state_dict()
+    if scheduler is not None:
+        ckpt["scheduler_state_dict"] = scheduler.state_dict()
+    torch.save(ckpt, path)
 
 
 def load_model(

@@ -5,11 +5,15 @@ Builds on MLBaseConfig template with XGBoost-specific and data pipeline configs.
 """
 
 import json
+import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar
+
+import psutil
+import torch
 
 T = TypeVar("T")
 
@@ -40,9 +44,32 @@ class ConsoleLogging:
 class Checkpointing:
     enabled: bool = True
     save_best: bool = True
+    save_every_n_epochs: int = 5
     metric: str = "rmse"
     mode: str = "min"
     best_filename: str = "model_best.json"
+
+
+@dataclass
+class TensorBoardConfig:
+    """TensorBoard logging settings — applied across all model types."""
+
+    enabled: bool = True
+
+    # System metrics logged per epoch
+    log_system_metrics: bool = True
+    log_cpu: bool = True
+    log_gpu_utilization: bool = True
+    log_vram: bool = True
+    log_gpu_temp: bool = True
+    log_gpu_power: bool = True
+
+    # Hyperparameters as text at step 0
+    log_hparams_text: bool = True
+
+    # Weight/gradient histograms
+    log_histograms: bool = True
+    histogram_every_n_epochs: int = 5
 
 
 # ---------------------------------------------------------------------------
@@ -94,6 +121,7 @@ class DataConfig:
     time_features: List[str] = field(
         default_factory=lambda: [
             "hour_of_day",
+            "minute_of_hour",
             "day_of_week",
             "is_weekend",
         ]
@@ -133,6 +161,7 @@ class MLBaseConfig:
     name: str = "experiment"
     seed: int = 42
     output_dir: str = "output"
+    tensorboard: TensorBoardConfig = field(default_factory=TensorBoardConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -230,6 +259,55 @@ def setup_console_logging(cfg, run_dir: Path):
         log_file.close()
 
     return cleanup
+
+
+def get_system_metrics(tb_cfg: "TensorBoardConfig") -> dict:
+    """Collect system metrics according to TensorBoardConfig flags."""
+    metrics = {}
+    if not tb_cfg.log_system_metrics:
+        return metrics
+
+    if tb_cfg.log_cpu:
+        metrics["cpu_percent"] = psutil.cpu_percent(interval=None)
+
+    if torch.cuda.is_available():
+        if tb_cfg.log_vram:
+            metrics["vram_allocated_mb"] = torch.cuda.memory_allocated() / 1024**2
+            metrics["vram_reserved_mb"] = torch.cuda.memory_reserved() / 1024**2
+            metrics["vram_max_allocated_mb"] = torch.cuda.max_memory_allocated() / 1024**2
+
+        if tb_cfg.log_gpu_utilization or tb_cfg.log_gpu_temp or tb_cfg.log_gpu_power or tb_cfg.log_vram:
+            try:
+                result = subprocess.run(
+                    ["nvidia-smi",
+                     "--query-gpu=utilization.gpu,memory.total,memory.used,temperature.gpu,power.draw",
+                     "--format=csv,noheader,nounits"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.returncode == 0:
+                    parts = [p.strip() for p in result.stdout.strip().split(",")]
+                    if tb_cfg.log_gpu_utilization:
+                        metrics["gpu_utilization_pct"] = float(parts[0])
+                    if tb_cfg.log_vram:
+                        metrics["vram_total_mb"] = float(parts[1])
+                        metrics["vram_used_mb"] = float(parts[2])
+                    if tb_cfg.log_gpu_temp:
+                        metrics["gpu_temp_c"] = float(parts[3])
+                    if tb_cfg.log_gpu_power:
+                        metrics["gpu_power_w"] = float(parts[4])
+            except (subprocess.TimeoutExpired, Exception):
+                pass
+
+    return metrics
+
+
+def log_system_metrics_to_tb(writer, tb_cfg: "TensorBoardConfig", epoch: int) -> None:
+    """Log system metrics to a TensorBoard SummaryWriter."""
+    if not tb_cfg.enabled or not tb_cfg.log_system_metrics:
+        return
+    metrics = get_system_metrics(tb_cfg)
+    for key, val in metrics.items():
+        writer.add_scalar(f"system/{key}", val, epoch)
 
 
 def _from_dict(cls: Type[T], data: Dict[str, Any]) -> T:

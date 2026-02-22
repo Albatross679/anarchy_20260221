@@ -24,13 +24,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import psutil
 import torch
 import torch.nn as nn
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 
-from lstm.config import LSTMDataConfig, LSTMParams
+from lstm.config import LSTMDataConfig, LSTMParams, TensorBoardConfig, log_system_metrics_to_tb
 
 
 # ---------------------------------------------------------------------------
@@ -305,8 +306,17 @@ def train_model(
     data_cfg: LSTMDataConfig,
     device: torch.device,
     run_dir: Optional[Path] = None,
+    tb_cfg: Optional[TensorBoardConfig] = None,
+    resume_from: Optional[str | Path] = None,
 ) -> EnergyLSTMHybrid:
-    """Train with AdamW, LR scheduler, gradient clipping, early stopping, and TensorBoard logging."""
+    """Train with AdamW, LR scheduler, gradient clipping, early stopping, and TensorBoard logging.
+
+    Resume: pass ``resume_from`` path to a checkpoint containing
+    optimizer_state_dict, scheduler_state_dict, epoch, and best_val_loss.
+    """
+    ckpt_dir = (run_dir / "checkpoints") if run_dir else None
+    if ckpt_dir:
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
     train_loader = DataLoader(
         train_dataset,
         batch_size=data_cfg.batch_size,
@@ -347,11 +357,51 @@ def train_model(
     else:
         scheduler = None
 
+    # Resume from checkpoint
+    start_epoch = 1
     best_val_loss = float("inf")
+    if resume_from is not None:
+        ckpt = torch.load(resume_from, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["model_state_dict"])
+        if "optimizer_state_dict" in ckpt:
+            optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if scheduler is not None and "scheduler_state_dict" in ckpt:
+            scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+        start_epoch = ckpt.get("epoch", 0) + 1
+        best_val_loss = ckpt.get("best_val_loss", float("inf"))
+        print(f"  Resumed from {resume_from} (epoch {start_epoch - 1}, best_val_loss={best_val_loss:.6f})")
+
+    if tb_cfg is None:
+        tb_cfg = TensorBoardConfig()
+
+    # Log hyperparameters as text at training start
+    if writer and tb_cfg.log_hparams_text and start_epoch == 1:
+        hparam_text = (
+            f"| Param | Value |\n|---|---|\n"
+            f"| learning_rate | {params.learning_rate} |\n"
+            f"| weight_decay | {params.weight_decay} |\n"
+            f"| epochs | {params.epochs} |\n"
+            f"| hidden_size | {params.hidden_size} |\n"
+            f"| num_layers | {params.num_layers} |\n"
+            f"| dropout_lstm | {params.dropout_lstm} |\n"
+            f"| bidirectional | {params.bidirectional} |\n"
+            f"| static_embedding_dim | {params.static_embedding_dim} |\n"
+            f"| head_dims | {params.head_dims} |\n"
+            f"| dropout_head | {params.dropout_head} |\n"
+            f"| scheduler | {params.scheduler} |\n"
+            f"| seq_length | {data_cfg.seq_length} |\n"
+            f"| batch_size | {data_cfg.batch_size} |\n"
+            f"| stride | {data_cfg.stride} |\n"
+        )
+        writer.add_text("hyperparameters", hparam_text, 0)
+
+    # Initialize CPU monitoring baseline
+    psutil.cpu_percent(interval=None)
+
     patience_counter = 0
     best_state = None
 
-    for epoch in range(1, params.epochs + 1):
+    for epoch in range(start_epoch, params.epochs + 1):
         # --- Train ---
         model.train()
         train_losses = []
@@ -403,8 +453,11 @@ def train_model(
             writer.add_scalar("metrics/val_mae", val_metrics["mae"], epoch)
             writer.add_scalar("metrics/val_r2", val_metrics["r2"], epoch)
 
-            # Weight and gradient histograms every 5 epochs
-            if epoch % 5 == 0 or epoch == 1:
+            # System metrics (CPU, GPU, VRAM) — config-driven
+            log_system_metrics_to_tb(writer, tb_cfg, epoch)
+
+            # Weight and gradient histograms
+            if tb_cfg.log_histograms and (epoch % tb_cfg.histogram_every_n_epochs == 0 or epoch == 1):
                 for name, param in model.named_parameters():
                     writer.add_histogram(f"weights/{name}", param.data, epoch)
                     if param.grad is not None:
@@ -418,6 +471,12 @@ def train_model(
             best_val_loss = val_loss
             patience_counter = 0
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            if ckpt_dir:
+                save_model(
+                    model, train_dataset.scaler_stats, ckpt_dir / "model_best.pt",
+                    optimizer=optimizer, scheduler=scheduler,
+                    epoch=epoch, best_val_loss=best_val_loss,
+                )
         else:
             patience_counter += 1
 
@@ -567,19 +626,27 @@ def save_model(
     model: EnergyLSTMHybrid,
     scaler_stats: dict,
     path: str | Path,
+    optimizer=None,
+    scheduler=None,
+    epoch: int = 0,
+    best_val_loss: float = float("inf"),
 ) -> None:
-    """Save model state_dict and scaler stats."""
+    """Save model state_dict, scaler stats, and optionally optimizer/scheduler/epoch."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(
-        {
-            "model_state_dict": model.state_dict(),
-            "scaler_stats": scaler_stats,
-            "n_temporal_features": model.n_temporal,
-            "n_static_features": model.n_static,
-        },
-        path,
-    )
+    ckpt = {
+        "model_state_dict": model.state_dict(),
+        "scaler_stats": scaler_stats,
+        "n_temporal_features": model.n_temporal,
+        "n_static_features": model.n_static,
+        "epoch": epoch,
+        "best_val_loss": best_val_loss,
+    }
+    if optimizer is not None:
+        ckpt["optimizer_state_dict"] = optimizer.state_dict()
+    if scheduler is not None:
+        ckpt["scheduler_state_dict"] = scheduler.state_dict()
+    torch.save(ckpt, path)
 
 
 def load_model(

@@ -13,6 +13,9 @@ dependencies = [
     "scikit-learn",
     "xgboost",
     "lightgbm",
+    "catboost",
+    "ngboost",
+    "quantile-forest",
     "scipy",
     "statsmodels",
 

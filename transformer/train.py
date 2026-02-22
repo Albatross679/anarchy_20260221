@@ -51,6 +51,7 @@ def parse_args():
     parser.add_argument("--d-model", type=int, default=None, help="Embedding dimension")
     parser.add_argument("--n-heads", type=int, default=None, help="Number of attention heads")
     parser.add_argument("--n-layers", type=int, default=None, help="Number of encoder layers")
+    parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
     return parser.parse_args()
 
 
@@ -152,6 +153,8 @@ def main():
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
+            tb_cfg=cfg.tensorboard,
+            resume_from=args.resume_from,
         )
 
         # 6. Evaluate (logs eval metrics to TensorBoard)

@@ -243,3 +243,87 @@ Ask me questions iteratively and back and forth to make sure we are making this 
   4. gross area = 0
   5. all lowercase
   6. OIL28SEC
+
+
+  So are we treating each data point as a one-hour interval or a 15-minute interval?
+
+
+    1. Cleaning + electricity filter (733K → 687K): Removes ~46K rows        
+  (outliers above 10,000 cap, excluded buildings, etc.)                    
+  2. Aggregation (687K → 387K, the big one): Many buildings have multiple  
+  electricity meters. aggregate_building_meters sums all meters for the
+  same building at the same timestamp into a single row. So a building with
+   3 meters produces 3 raw rows per timestamp but only 1 aggregated row.
+  This alone accounts for ~300K rows.
+  3. Weather join (387K → 386K): Loses ~1,325 rows where meter readings
+  fall outside the weather data's time range.
+  4. Percentile outlier removal (386K → 382K): Trims the top and bottom 1%
+  of energy-per-sqft values, dropping ~3,861 rows and 2 buildings that were
+   entirely outliers.
+
+
+output a CSV file with only the utility type of electricity.
+
+
+How do we handle samples that don't have data for previous time stamps?
+
+
+  │          File           │  Rows   │ Buildings │                        
+  ├─────────────────────────┼─────────┼───────────┤                        
+  │ cleaned_electricity.csv │ 686,823 │ 265       │                        
+  ├─────────────────────────┼─────────┼───────────┤                        
+  │ cleaned_gas.csv         │ 232,644 │ 147       │                        
+  ├─────────────────────────┼─────────┼───────────┤
+  │ cleaned_heat.csv        │ 227,364 │ 130       │
+  ├─────────────────────────┼─────────┼───────────┤
+  │ cleaned_cooling.csv     │ 190,840 │ 86        │
+  ├─────────────────────────┼─────────┼───────────┤
+  │ cleaned_steam.csv       │ 48,057  │ 26        │
+  ├─────────────────────────┼─────────┼───────────┤
+  │ cleaned_steamrate.csv   │ 1,464   │ 1         │
+
+
+How often do we save the checkpoints? How many epochs do we save a checkpoint for one time?
+
+Let's save the model every five epochs, and let's also save the model over all the epochs with the highest validation matrix.
+
+
+create a markdown file describing the input and output of this backend cnn model.
+
+Launch an LSTM training instance with 100 epochs, disabling early stopping. Match the configuration structure as the same as CNN.
+
+I want a sample to be for 15 mins rather than 1 hour. assign weather to the each 15 min. do we have this on our datacleaning process?
+
+
+Did you apply all the new cleaning scripts to all the data with all the utility types?
+
+
+  Cleaning report: 1,478,640 raw rows → 1,460,283 after cleaning (8,784
+  OIL28SEC excluded, 4,392 unmatched buildings dropped, 5,181 outliers
+  capped, 112 short gaps filled, 73,080 NaN gaps remaining).
+
+  Look through this project.Tell me what model might be most fitting for the task.
+
+  Explain what this process looks like in the data loader.
+
+  How should we clean this folder?
+
+  Is there any training running currently in the background? Tell me how it goes.
+
+  Drop the current training instance and launch a training instance and activate it on TensorBoard and forward it to my local host through SSH.
+
+
+  create a xgboost folder and a lightgbm folder as you suggested, using the similar structure of the cnn folder. 
+
+  Do we have CPU, VRAM, and GPU usage at each epoch on TensorBoard?If not, please add them.And we have hyperparometer presented on TensorFlow as well.
+
+  Are these configurable in the @config.py   file? I want this to be generally applied by default.
+
+  Make sure all the other models have these changes applied.Including SGB Boost, Transformers, and others. Look through the directory.
+
+  can i safely stop the training and pick it up later continuing training? is it possible?
+
+
+  launch a training instance and activate it on TensorBoard and forward it to my local host through SSH.kill the current tensorboard if there is one currently running.
+
+  Can we also add other matrices as neural modals have over epochs?

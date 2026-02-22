@@ -49,6 +49,8 @@ def parse_args():
     parser.add_argument("--hidden-size", type=int, default=None, help="LSTM hidden size")
     parser.add_argument("--num-layers", type=int, default=None, help="LSTM layers")
     parser.add_argument("--no-temporal-split", action="store_true", help="Use random split")
+    parser.add_argument("--no-early-stop", action="store_true", help="Disable early stopping")
+    parser.add_argument("--resume-from", type=str, default=None, help="Path to checkpoint to resume training from")
     return parser.parse_args()
 
 
@@ -78,6 +80,8 @@ def main():
         cfg.lstm.num_layers = args.num_layers
     if args.no_temporal_split:
         cfg.data.temporal_split = False
+    if args.no_early_stop:
+        cfg.lstm.early_stopping_patience = 999
 
     # Setup output directory and logging
     run_dir = setup_output_dir(cfg)
@@ -152,6 +156,8 @@ def main():
             data_cfg=data_cfg,
             device=device,
             run_dir=run_dir,
+            tb_cfg=cfg.tensorboard,
+            resume_from=args.resume_from,
         )
 
         # 7. Evaluate (logs eval metrics to TensorBoard)
