@@ -1,0 +1,20 @@
+{
+  "rmse": 5.2053130300344554e-05,
+  "mae": 1.2670742329410255e-05,
+  "r2": 0.9600725495233733,
+  "mape_pct": 436.861978776411,
+  "n_test": 781644,
+  "n_trees_used": 246,
+  "top_features": {
+    "energy_lag_4": 695,
+    "energy_lag_672": 527,
+    "rolling_std_96": 434,
+    "rolling_mean_96": 421,
+    "energy_lag_96": 389,
+    "hour_of_day": 387,
+    "rolling_std_672": 364,
+    "temp_x_area": 344,
+    "apparent_temperature": 241,
+    "temperature_2m": 212
+  }
+}

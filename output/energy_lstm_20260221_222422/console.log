@@ -1,0 +1,93 @@
+============================================================
+Hybrid LSTM Energy Prediction — energy_lstm
+Output: output/energy_lstm_20260221_222422
+Utility: ELECTRICITY
+Seq length: 96 (24.0h)
+LSTM: hidden_size=128, layers=2
+Seed: 42
+============================================================
+
+--- Data Pipeline ---
+Loading building metadata...
+  Buildings with valid area: 1,178
+Loading meter data...
+  Raw meter readings: 692,661
+  After aggregation: 391,801
+  After building join: 387,409
+  Unique buildings: 265
+Loading weather data...
+  After weather join: 386,084
+  Outlier removal: 3,861 rows removed (1st-99th percentile)
+  Final dataset: 382,223 rows, 263 buildings
+  Temporal features (11): ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'direct_radiation', 'wind_speed_10m', 'cloud_cover', 'apparent_temperature', 'precipitation', 'hour_of_day', 'day_of_week', 'is_weekend']
+  Static features (3): ['grossarea', 'floorsaboveground', 'building_age']
+
+--- Train/Test Split ---
+Train: 186,812 rows | Test: 195,411 rows
+
+--- Creating Sequence Datasets ---
+  Train windows: 40,459
+  Test windows:  42,801
+
+--- Model ---
+  Parameters: 219,041
+  Device: cuda
+EnergyLSTMHybrid(
+  (lstm): LSTM(11, 128, num_layers=2, batch_first=True, dropout=0.2)
+  (static_mlp): Sequential(
+    (0): Linear(in_features=3, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.2, inplace=False)
+    (3): Linear(in_features=64, out_features=32, bias=True)
+    (4): ReLU()
+  )
+  (head): Sequential(
+    (0): Linear(in_features=160, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.3, inplace=False)
+    (3): Linear(in_features=64, out_features=32, bias=True)
+    (4): ReLU()
+    (5): Dropout(p=0.3, inplace=False)
+    (6): Linear(in_features=32, out_features=1, bias=True)
+  )
+)
+
+--- Training ---
+  Epoch   1/100  train_loss=0.986188  val_loss=0.658112  R²=0.0426  lr=1.00e-03  patience=0/999
+  Epoch   5/100  train_loss=0.657433  val_loss=0.455991  R²=0.3365  lr=9.96e-04  patience=0/999
+  Epoch  10/100  train_loss=0.464757  val_loss=0.474707  R²=0.3095  lr=9.80e-04  patience=3/999
+  Epoch  15/100  train_loss=0.381099  val_loss=0.292151  R²=0.5758  lr=9.52e-04  patience=1/999
+  Epoch  20/100  train_loss=0.332421  val_loss=0.244145  R²=0.6455  lr=9.14e-04  patience=0/999
+  Epoch  25/100  train_loss=0.324580  val_loss=0.243431  R²=0.6466  lr=8.64e-04  patience=1/999
+  Epoch  30/100  train_loss=0.318752  val_loss=0.234416  R²=0.6594  lr=8.06e-04  patience=0/999
+  Epoch  35/100  train_loss=0.289240  val_loss=0.227050  R²=0.6702  lr=7.41e-04  patience=1/999
+  Epoch  40/100  train_loss=0.279604  val_loss=0.218960  R²=0.6818  lr=6.69e-04  patience=0/999
+  Epoch  45/100  train_loss=0.273649  val_loss=0.214127  R²=0.6887  lr=5.94e-04  patience=1/999
+  Epoch  50/100  train_loss=0.262153  val_loss=0.209266  R²=0.6959  lr=5.16e-04  patience=1/999
+  Epoch  55/100  train_loss=0.247810  val_loss=0.203996  R²=0.7035  lr=4.37e-04  patience=0/999
+  Epoch  60/100  train_loss=0.241905  val_loss=0.198731  R²=0.7111  lr=3.61e-04  patience=3/999
+  Epoch  65/100  train_loss=0.234267  val_loss=0.195401  R²=0.7155  lr=2.87e-04  patience=1/999
+  Epoch  70/100  train_loss=0.227585  val_loss=0.193221  R²=0.7186  lr=2.19e-04  patience=6/999
+  Epoch  75/100  train_loss=0.225593  val_loss=0.188712  R²=0.7252  lr=1.58e-04  patience=0/999
+  Epoch  80/100  train_loss=0.229911  val_loss=0.188084  R²=0.7261  lr=1.05e-04  patience=0/999
+  Epoch  85/100  train_loss=0.224827  val_loss=0.190493  R²=0.7226  lr=6.18e-05  patience=2/999
+  Epoch  90/100  train_loss=0.217214  val_loss=0.186381  R²=0.7286  lr=2.96e-05  patience=1/999
+  Epoch  95/100  train_loss=0.221713  val_loss=0.187812  R²=0.7265  lr=8.86e-06  patience=6/999
+  Epoch 100/100  train_loss=0.216006  val_loss=0.187860  R²=0.7264  lr=2.47e-07  patience=11/999
+
+--- Evaluation ---
+  RMSE:  0.000506
+  MAE:   0.000234
+  R²:    0.7292
+  MAPE:  5251.41%
+
+  Model saved: output/energy_lstm_20260221_222422/checkpoints/model_best.pt
+
+--- Generating Predictions ---
+  Predictions saved: output/energy_lstm_20260221_222422/predictions.parquet
+
+============================================================
+Done in 529.5s
+Output directory: output/energy_lstm_20260221_222422
+TensorBoard:  tensorboard --logdir output/energy_lstm_20260221_222422/tensorboard
+============================================================
