@@ -1,0 +1,39 @@
+============================================================
+UNCERTAINTY & CONFIDENCE REPORT — STEAM
+============================================================
+
+Total buildings analyzed: 26
+Confidence tiers:
+  High:   9 buildings
+  Medium: 8 buildings
+  Low:    9 buildings
+
+Uncertainty sources used:
+  - residual_uncertainty: mean=0.1286, std=0.2016
+  - combined_uncertainty: mean=0.0643, std=0.1008
+
+TOP 10 HIGHEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 1018 (Fontana Laboratories (1018)) — Uncertainty: 0.0100 [High]
+   2. Building 353 (Ross Heart Hospital (0353)) — Uncertainty: 0.0119 [High]
+   3. Building 180 (Goss Laboratory (0180)) — Uncertainty: 0.0126 [High]
+   4. Building 89 (Doan Hall (0089)) — Uncertainty: 0.0128 [High]
+   5. Building 136 (Veterinary Medicine Academic (0136)) — Uncertainty: 0.0134 [High]
+   6. Building 165 (Harding Hospital (0165)) — Uncertainty: 0.0142 [High]
+   7. Building 12 (Ornamental Plant Germplasm Center (0012)) — Uncertainty: 0.0145 [High]
+   8. Building 64 (Parker Food Science and Technology (0064)) — Uncertainty: 0.0161 [High]
+   9. Building 88 (Parking Garage - Tuttle Park Pl (0088)) — Uncertainty: 0.0164 [High]
+  10. Building 80 (Sisson Hall (0080)) — Uncertainty: 0.0170 [Medium]
+
+TOP 10 LOWEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 371 (Celeste Laboratory of Chemistry (0371)) — Uncertainty: 0.3536 [Low]
+   2. Building 53 (McPherson Chemical Laboratory (0053)) — Uncertainty: 0.3516 [Low]
+   3. Building 1044 (Energy Advancement and Innovation Center (1044)) — Uncertainty: 0.2419 [Low]
+   4. Building 69 (McCracken Power Plant (0069)) — Uncertainty: 0.1685 [Low]
+   5. Building 276 (Biological Sciences Building (0276)) — Uncertainty: 0.1249 [Low]
+   6. Building 277 (Graves Hall (0277)) — Uncertainty: 0.0400 [Low]
+   7. Building 41 (Lazenby Hall (0041)) — Uncertainty: 0.0366 [Low]
+   8. Building 85 (Hale Hall (0085)) — Uncertainty: 0.0351 [Low]
+   9. Building 249 (Fisher Hall (0249)) — Uncertainty: 0.0306 [Low]
+  10. Building 282 (Galbreath Equine Center (0282)) — Uncertainty: 0.0269 [Medium]

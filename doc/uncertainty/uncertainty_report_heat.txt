@@ -1,0 +1,39 @@
+============================================================
+UNCERTAINTY & CONFIDENCE REPORT — HEAT
+============================================================
+
+Total buildings analyzed: 129
+Confidence tiers:
+  High:   43 buildings
+  Medium: 43 buildings
+  Low:    43 buildings
+
+Uncertainty sources used:
+  - residual_uncertainty: mean=0.1500, std=0.1222
+  - combined_uncertainty: mean=0.0750, std=0.0611
+
+TOP 10 HIGHEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 1 (Bricker Hall (0001)) — Uncertainty: 0.0111 [High]
+   2. Building 1103 (Raney House (1103)) — Uncertainty: 0.0112 [High]
+   3. Building 144 (Psychology Building (0144)) — Uncertainty: 0.0112 [High]
+   4. Building 182 (Haverfield House (0182)) — Uncertainty: 0.0112 [High]
+   5. Building 265 (MacQuigg Laboratory (0265)) — Uncertainty: 0.0112 [High]
+   6. Building 187 (Mathematics Building (0187)) — Uncertainty: 0.0112 [High]
+   7. Building 18 (Campbell Hall (0018)) — Uncertainty: 0.0112 [High]
+   8. Building 42 (Hughes Hall (0042)) — Uncertainty: 0.0112 [High]
+   9. Building 78 (Maintenance Building (0078)) — Uncertainty: 0.0112 [High]
+  10. Building 302 (Prior Hall (0302)) — Uncertainty: 0.0113 [High]
+
+TOP 10 LOWEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 390 (Water Treatment (0390)) — Uncertainty: 0.3631 [Low]
+   2. Building 247 (McCorkle Aquatic Pavilion (0247)) — Uncertainty: 0.2893 [Low]
+   3. Building 1109 (North Recreation Center (1109)) — Uncertainty: 0.2727 [Low]
+   4. Building 131 (Aronoff Laboratory (0131)) — Uncertainty: 0.2504 [Low]
+   5. Building 1107 (Blackburn House (1107)) — Uncertainty: 0.2219 [Low]
+   6. Building 10 (Biological Sciences Greenhouses (0010)) — Uncertainty: 0.2173 [Low]
+   7. Building 105 (Kennedy Commons (0105)) — Uncertainty: 0.2104 [Low]
+   8. Building 7 (Mathematics Tower (0007)) — Uncertainty: 0.2079 [Low]
+   9. Building 1106 (Curl Hall (1106)) — Uncertainty: 0.1824 [Low]
+  10. Building 28 (Faculty Club (0028)) — Uncertainty: 0.1733 [Low]

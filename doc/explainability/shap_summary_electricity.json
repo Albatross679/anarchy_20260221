@@ -1,0 +1,42 @@
+{
+  "utility": "ELECTRICITY",
+  "n_buildings": 263,
+  "n_features": 27,
+  "n_samples_for_shap": 5000,
+  "feature_importance_shap": {
+    "energy_lag_4": 5.5389686167472973e-05,
+    "energy_lag_96": 2.7935164325754158e-05,
+    "energy_lag_672": 1.5718942449893802e-05,
+    "rolling_mean_96": 9.4968327175593e-06,
+    "cloud_cover": 2.563368070696015e-06,
+    "building_age": 2.197287585659069e-06,
+    "rolling_mean_672": 1.8855886310120695e-06,
+    "rolling_std_672": 1.1722836461558472e-06,
+    "rolling_std_96": 8.087311016424792e-07,
+    "direct_radiation": 6.962861789361341e-07,
+    "energy_lag_24": 6.401158429980569e-07,
+    "hour_of_day": 4.4235713403395494e-07,
+    "temp_x_area": 4.142756608871423e-07,
+    "humidity_x_area": 1.6943178593464836e-07,
+    "precipitation": 9.67068487511824e-08,
+    "grossarea": 7.807513924262821e-08,
+    "apparent_temperature": 5.2824773888460186e-08,
+    "dew_point_2m": 4.118047058909724e-08,
+    "wind_speed_10m": 5.137656966525128e-09,
+    "temperature_2m": 0.0,
+    "relative_humidity_2m": 0.0,
+    "floorsaboveground": 0.0,
+    "minute_of_hour": 0.0,
+    "day_of_week": 0.0,
+    "is_weekend": 0.0,
+    "hdd": 0.0,
+    "cdd": 0.0
+  },
+  "top_buildings_explained": [
+    "376",
+    "388",
+    "69",
+    "230",
+    "29"
+  ]
+}

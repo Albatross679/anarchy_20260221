@@ -1,0 +1,48 @@
+Building 376 (COOLING):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.006535)
+    2. Energy (1 day ago) increases predicted consumption (SHAP +0.001984)
+    3. 24h Avg Energy increases predicted consumption (SHAP +0.001418)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000316)
+    5. Temp × Area decreases predicted consumption (SHAP -0.000280)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.009617)
+
+
+Building 388 (COOLING):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.005455)
+    2. Energy (1 day ago) increases predicted consumption (SHAP +0.001769)
+    3. 24h Avg Energy increases predicted consumption (SHAP +0.001281)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000247)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000159)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.008607)
+
+
+Building 1018 (COOLING):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.009037)
+    2. Energy (1 day ago) increases predicted consumption (SHAP +0.002462)
+    3. 24h Avg Energy increases predicted consumption (SHAP +0.001924)
+    4. Energy (1 week ago) increases predicted consumption (SHAP +0.000182)
+    5. Building Age increases predicted consumption (SHAP +0.000165)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.013754)
+
+
+Building 69 (COOLING):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.002260)
+    2. Energy (1 day ago) increases predicted consumption (SHAP +0.000915)
+    3. 24h Avg Energy increases predicted consumption (SHAP +0.000514)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000197)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000118)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.003548)
+
+
+Building 41 (COOLING):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.000076)
+    2. Energy (1 day ago) increases predicted consumption (SHAP +0.000016)
+    3. 24h Avg Energy increases predicted consumption (SHAP +0.000008)
+    4. Energy (1 week ago) increases predicted consumption (SHAP +0.000017)
+    5. Hour of Day decreases predicted consumption (SHAP -0.000002)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000096)

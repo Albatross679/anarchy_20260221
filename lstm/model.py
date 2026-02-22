@@ -149,7 +149,7 @@ class EnergyLSTMHybrid(nn.Module):
     Architecture:
         Temporal branch: LSTM(hidden_size, num_layers) -> h_n[-1]
         Static branch:   MLP [Linear -> ReLU -> Dropout]xN -> Linear -> ReLU
-        Fusion:          concat -> MLP head [Linear -> ReLU -> Dropout]xN -> Linear(1)
+        Fusion:          concat -> MLP head [Linear -> GELU -> Dropout]xN -> Linear(1)
     """
 
     def __init__(
@@ -190,13 +190,13 @@ class EnergyLSTMHybrid(nn.Module):
         static_layers.append(nn.ReLU())
         self.static_mlp = nn.Sequential(*static_layers)
 
-        # --- Fusion head ---
+        # --- Fusion head (GELU activation to match seq_experiment) ---
         fusion_in = lstm_out_dim + params.static_embedding_dim
         head_layers = []
         in_dim = fusion_in
         for hdim in params.head_dims:
             head_layers.append(nn.Linear(in_dim, hdim))
-            head_layers.append(nn.ReLU())
+            head_layers.append(nn.GELU())
             head_layers.append(nn.Dropout(params.dropout_head))
             in_dim = hdim
         head_layers.append(nn.Linear(in_dim, 1))

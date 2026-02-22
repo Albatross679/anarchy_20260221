@@ -1,0 +1,39 @@
+============================================================
+UNCERTAINTY & CONFIDENCE REPORT — COOLING
+============================================================
+
+Total buildings analyzed: 86
+Confidence tiers:
+  High:   29 buildings
+  Medium: 28 buildings
+  Low:    29 buildings
+
+Uncertainty sources used:
+  - residual_uncertainty: mean=0.0627, std=0.1006
+  - combined_uncertainty: mean=0.0313, std=0.0503
+
+TOP 10 HIGHEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 249 (Fisher Hall (0249)) — Uncertainty: 0.0117 [High]
+   2. Building 4 (Eighteenth Ave, 209 W (0004)) — Uncertainty: 0.0119 [High]
+   3. Building 50 (Thompson Library (0050)) — Uncertainty: 0.0124 [High]
+   4. Building 354 (Rhodes Hall (0354)) — Uncertainty: 0.0129 [High]
+   5. Building 386 (Wexner Center for the Arts (0386)) — Uncertainty: 0.0132 [High]
+   6. Building 254 (Blackwell Inn (0254)) — Uncertainty: 0.0136 [High]
+   7. Building 1108 (Scott House (1108)) — Uncertainty: 0.0136 [High]
+   8. Building 18 (Campbell Hall (0018)) — Uncertainty: 0.0136 [High]
+   9. Building 870 (Medical Center Tower (0870)) — Uncertainty: 0.0136 [High]
+  10. Building 67 (Pomerene Hall (0067)) — Uncertainty: 0.0136 [High]
+
+TOP 10 LOWEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 376 (Chilled Water Plant, East Regional (0376)) — Uncertainty: 0.3783 [Low]
+   2. Building 388 (Chiller Plant, South Campus Central (0388)) — Uncertainty: 0.2374 [Low]
+   3. Building 77 (Central Service Building (0077)) — Uncertainty: 0.1793 [Low]
+   4. Building 1018 (Fontana Laboratories (1018)) — Uncertainty: 0.1472 [Low]
+   5. Building 69 (McCracken Power Plant (0069)) — Uncertainty: 0.0739 [Low]
+   6. Building 276 (Biological Sciences Building (0276)) — Uncertainty: 0.0602 [Low]
+   7. Building 280 (Baker Systems Engineering (0280)) — Uncertainty: 0.0552 [Low]
+   8. Building 127 (Smith Electrical Substation (0127)) — Uncertainty: 0.0403 [Low]
+   9. Building 371 (Celeste Laboratory of Chemistry (0371)) — Uncertainty: 0.0366 [Low]
+  10. Building 160 (Student Academic Services (0160)) — Uncertainty: 0.0360 [Low]

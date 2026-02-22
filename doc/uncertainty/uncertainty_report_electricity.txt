@@ -1,0 +1,42 @@
+============================================================
+UNCERTAINTY & CONFIDENCE REPORT — ELECTRICITY
+============================================================
+
+Total buildings analyzed: 263
+Confidence tiers:
+  High:   87 buildings
+  Medium: 89 buildings
+  Low:    87 buildings
+
+Uncertainty sources used:
+  - residual_uncertainty: mean=0.0529, std=0.0788
+  - qrf_uncertainty: mean=0.0513, std=0.0718
+  - ngb_uncertainty: mean=0.0063, std=0.0644
+  - model_disagreement: mean=0.4810, std=0.1966
+  - combined_uncertainty: mean=0.1740, std=0.0597
+
+TOP 10 HIGHEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 18 (Campbell Hall (0018)) — Uncertainty: 0.0360 [High]
+   2. Building 272 (Morrill Tower (0272)) — Uncertainty: 0.0425 [High]
+   3. Building 254 (Blackwell Inn (0254)) — Uncertainty: 0.0474 [High]
+   4. Building 882 (Morehouse Medical Plaza - Concourse (0882)) — Uncertainty: 0.0564 [High]
+   5. Building 279 (Dreese Laboratories (0279)) — Uncertainty: 0.0564 [High]
+   6. Building 190 (Morrison Tower (0190)) — Uncertainty: 0.0578 [High]
+   7. Building 180 (Goss Laboratory (0180)) — Uncertainty: 0.0606 [High]
+   8. Building 267 (Jones Tower (0267)) — Uncertainty: 0.0609 [High]
+   9. Building 249 (Fisher Hall (0249)) — Uncertainty: 0.0637 [High]
+  10. Building 106 (Sullivant Hall (0106)) — Uncertainty: 0.0646 [High]
+
+TOP 10 LOWEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 1056 (Coffey Rd Recreation Complex (1056)) — Uncertainty: 0.3759 [Low]
+   2. Building 304 (Athletic Maintenance (0304)) — Uncertainty: 0.3629 [Low]
+   3. Building 69 (McCracken Power Plant (0069)) — Uncertainty: 0.3491 [Low]
+   4. Building 377 (Generator Building (0377)) — Uncertainty: 0.3345 [Low]
+   5. Building 388 (Chiller Plant, South Campus Central (0388)) — Uncertainty: 0.3327 [Low]
+   6. Building 308 (Rightmire Hall (0308)) — Uncertainty: 0.3201 [Low]
+   7. Building 157 (Wiseman Hall (0157)) — Uncertainty: 0.3067 [Low]
+   8. Building 218 (Recreation Service (0218)) — Uncertainty: 0.2948 [Low]
+   9. Building 132 (Herrick Dr, 393 (0132)) — Uncertainty: 0.2909 [Low]
+  10. Building 171 (Dodd Hall (0171)) — Uncertainty: 0.2872 [Low]

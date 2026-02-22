@@ -1,0 +1,42 @@
+{
+  "utility": "GAS",
+  "n_buildings": 146,
+  "n_features": 27,
+  "n_samples_for_shap": 5000,
+  "feature_importance_shap": {
+    "rolling_mean_96": 3.665425174403936e-05,
+    "rolling_mean_672": 1.2281655472179409e-05,
+    "energy_lag_96": 6.610895525227534e-06,
+    "energy_lag_4": 5.6849307839001995e-06,
+    "energy_lag_672": 4.442785666469717e-06,
+    "rolling_std_96": 2.1647294943250017e-06,
+    "precipitation": 1.6975650396489073e-06,
+    "temp_x_area": 1.4023715948496829e-06,
+    "rolling_std_672": 1.0032623549705022e-06,
+    "temperature_2m": 4.824596544494852e-07,
+    "humidity_x_area": 4.751812525682908e-07,
+    "hour_of_day": 2.098773137504395e-07,
+    "floorsaboveground": 6.936667773516092e-08,
+    "relative_humidity_2m": 4.4440369606491004e-08,
+    "building_age": 4.1091833935524846e-08,
+    "energy_lag_24": 5.574296135790746e-09,
+    "grossarea": 0.0,
+    "dew_point_2m": 0.0,
+    "direct_radiation": 0.0,
+    "wind_speed_10m": 0.0,
+    "cloud_cover": 0.0,
+    "apparent_temperature": 0.0,
+    "minute_of_hour": 0.0,
+    "day_of_week": 0.0,
+    "is_weekend": 0.0,
+    "hdd": 0.0,
+    "cdd": 0.0
+  },
+  "top_buildings_explained": [
+    "882",
+    "1106",
+    "362",
+    "307",
+    "358"
+  ]
+}

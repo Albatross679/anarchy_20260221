@@ -1,0 +1,48 @@
+Building 376 (ELECTRICITY):
+  Key energy drivers:
+    1. Energy (1 day ago) increases predicted consumption (SHAP +0.001055)
+    2. Energy (1h ago) increases predicted consumption (SHAP +0.000728)
+    3. Energy (1 week ago) increases predicted consumption (SHAP +0.000618)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000228)
+    5. Building Age increases predicted consumption (SHAP +0.000118)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.002387)
+
+
+Building 388 (ELECTRICITY):
+  Key energy drivers:
+    1. Energy (1 day ago) increases predicted consumption (SHAP +0.000949)
+    2. Energy (1h ago) increases predicted consumption (SHAP +0.000770)
+    3. Energy (1 week ago) increases predicted consumption (SHAP +0.000606)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000223)
+    5. Building Age increases predicted consumption (SHAP +0.000125)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.002359)
+
+
+Building 69 (ELECTRICITY):
+  Key energy drivers:
+    1. Energy (1 day ago) increases predicted consumption (SHAP +0.000738)
+    2. Energy (1h ago) increases predicted consumption (SHAP +0.000573)
+    3. Energy (1 week ago) increases predicted consumption (SHAP +0.000509)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000074)
+    5. 24h Avg Energy increases predicted consumption (SHAP +0.000079)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.001744)
+
+
+Building 230 (ELECTRICITY):
+  Key energy drivers:
+    1. Energy (1h ago) increases predicted consumption (SHAP +0.000491)
+    2. Energy (1 week ago) increases predicted consumption (SHAP +0.000314)
+    3. Energy (1 day ago) increases predicted consumption (SHAP +0.000271)
+    4. 24h Avg Energy increases predicted consumption (SHAP +0.000068)
+    5. Temp × Area decreases predicted consumption (SHAP -0.000025)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.001041)
+
+
+Building 29 (ELECTRICITY):
+  Key energy drivers:
+    1. Energy (1 day ago) increases predicted consumption (SHAP +0.000181)
+    2. Energy (1h ago) increases predicted consumption (SHAP +0.000090)
+    3. Energy (1 week ago) increases predicted consumption (SHAP +0.000101)
+    4. Cloud Cover decreases predicted consumption (SHAP -0.000019)
+    5. 24h Avg Energy increases predicted consumption (SHAP +0.000020)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000341)

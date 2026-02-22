@@ -481,3 +481,44 @@ I think we should make another data cleaning script that outputs data for tree b
   - Only for buildings that have both gas + the other utility
   - Add it as an optional flag (e.g. --cross_utility) so we can A/B test
   against the current gas model
+
+
+Would this work? If we only select the most important K features and feed them to a very complex neural network,
+
+You will look through all the files in this directory.Try to list all the issues that we have encountered in this project.Write them in this markdown file.In a very short, concise, and simple phrasing.
+
+Are you able to extract the LSTM hyperparameter and create a script to replicate this outcome?
+
+Could you use this kind of structure to integrate this LSTM for GAS script? When you are done creating the configuration file, launch the training
+
+
+concisely, find a section in the report to describe the features and target of this gas model.
+
+concisely, find a section in the report to describe the features and 
+
+
+  2. Multi-Signal Scoring (src/scoring.py)
+  - Currently only using |mean_residual| — add:
+    - Weather sensitivity: how much does consumption spike vs peers in
+  extreme weather?
+    - Baseline load ratio: off-hours consumption / peak consumption
+    - Variability score: residual std normalized by mean
+    - Peer comparison: z-score within same building size tier
+  - Weighted composite: r_b = α₁·residual + α₂·anomaly +
+  α₃·weather_sensitivity + α₄·baseline
+
+    3. Per-Building Evidence Cards
+  - One-page summary per building: rank, scores, key drivers, time series
+  plot, confidence tier
+  - "Why this building?" explanation in plain language
+  - Exportable as PNG or PDF for stakeholder handoff
+
+    4. SHAP Explainability (src/explainer.py)
+  - Global feature importance (already have) + per-building SHAP waterfall
+  - "Building X wastes energy because: high baseline load (SHAP +0.3), poor
+   weather response (SHAP +0.2)"
+
+     7. Uncertainty/Confidence Tiers
+  - Use QRF prediction intervals already available
+  - Tier buildings: High/Medium/Low confidence in ranking
+  - Decision-makers need to know "how sure are we?"

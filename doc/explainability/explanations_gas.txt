@@ -1,0 +1,48 @@
+Building 882 (GAS):
+  Key energy drivers:
+    1. 24h Avg Energy increases predicted consumption (SHAP +0.000575)
+    2. 7-day Avg Energy increases predicted consumption (SHAP +0.000134)
+    3. Energy (1h ago) increases predicted consumption (SHAP +0.000073)
+    4. Energy (1 day ago) increases predicted consumption (SHAP +0.000068)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000059)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000886)
+
+
+Building 1106 (GAS):
+  Key energy drivers:
+    1. 24h Avg Energy increases predicted consumption (SHAP +0.000216)
+    2. 7-day Avg Energy increases predicted consumption (SHAP +0.000078)
+    3. Energy (1 day ago) increases predicted consumption (SHAP +0.000030)
+    4. Temp × Area decreases predicted consumption (SHAP -0.000032)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000019)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000319)
+
+
+Building 362 (GAS):
+  Key energy drivers:
+    1. 24h Avg Energy increases predicted consumption (SHAP +0.000084)
+    2. 7-day Avg Energy increases predicted consumption (SHAP +0.000025)
+    3. Energy (1 day ago) increases predicted consumption (SHAP +0.000013)
+    4. Temp × Area decreases predicted consumption (SHAP -0.000016)
+    5. Energy (1h ago) increases predicted consumption (SHAP +0.000005)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000114)
+
+
+Building 307 (GAS):
+  Key energy drivers:
+    1. 24h Avg Energy increases predicted consumption (SHAP +0.000173)
+    2. 7-day Avg Energy increases predicted consumption (SHAP +0.000068)
+    3. Energy (1 day ago) increases predicted consumption (SHAP +0.000020)
+    4. Energy (1h ago) increases predicted consumption (SHAP +0.000010)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000014)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000278)
+
+
+Building 358 (GAS):
+  Key energy drivers:
+    1. 24h Avg Energy increases predicted consumption (SHAP +0.000238)
+    2. 7-day Avg Energy increases predicted consumption (SHAP +0.000086)
+    3. Energy (1 day ago) increases predicted consumption (SHAP +0.000045)
+    4. Temp × Area decreases predicted consumption (SHAP -0.000036)
+    5. Energy (1 week ago) increases predicted consumption (SHAP +0.000029)
+  Assessment: Model predicts HIGHER consumption than baseline (net SHAP effect: +0.000382)

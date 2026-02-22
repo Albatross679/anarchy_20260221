@@ -1,0 +1,39 @@
+============================================================
+UNCERTAINTY & CONFIDENCE REPORT — GAS
+============================================================
+
+Total buildings analyzed: 146
+Confidence tiers:
+  High:   48 buildings
+  Medium: 50 buildings
+  Low:    48 buildings
+
+Uncertainty sources used:
+  - residual_uncertainty: mean=0.1091, std=0.1134
+  - combined_uncertainty: mean=0.0546, std=0.0567
+
+TOP 10 HIGHEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 113 (Davis Heart and Lung Research Institute (0113)) — Uncertainty: 0.0102 [High]
+   2. Building 146 (Bolz Hall (0146)) — Uncertainty: 0.0102 [High]
+   3. Building 148 (Scott Laboratory (0148)) — Uncertainty: 0.0102 [High]
+   4. Building 147 (Newman and Wolfrom Laboratory of Chemistry (0147)) — Uncertainty: 0.0102 [High]
+   5. Building 18 (Campbell Hall (0018)) — Uncertainty: 0.0102 [High]
+   6. Building 180 (Goss Laboratory (0180)) — Uncertainty: 0.0102 [High]
+   7. Building 213 (Center for Integrative Medicine (0213)) — Uncertainty: 0.0102 [High]
+   8. Building 171 (Dodd Hall (0171)) — Uncertainty: 0.0102 [High]
+   9. Building 248 (CBEC (0248)) — Uncertainty: 0.0102 [High]
+  10. Building 61 (Page Hall (0061)) — Uncertainty: 0.0102 [High]
+
+TOP 10 LOWEST CONFIDENCE BUILDINGS:
+----------------------------------------
+   1. Building 307 (Bevis Hall (0307)) — Uncertainty: 0.3419 [Low]
+   2. Building 1106 (Curl Hall (1106)) — Uncertainty: 0.3005 [Low]
+   3. Building 222 (Heffner Wetland Research and Education (0222)) — Uncertainty: 0.2765 [Low]
+   4. Building 310 (Scott Hall (0310)) — Uncertainty: 0.2445 [Low]
+   5. Building 130 (Power House (0130)) — Uncertainty: 0.2026 [Low]
+   6. Building 394 (Biotechnology Support Facility (0394)) — Uncertainty: 0.1799 [Low]
+   7. Building 882 (Morehouse Medical Plaza - Concourse (0882)) — Uncertainty: 0.1741 [Low]
+   8. Building 362 (Bulk Chemical Warehouse (0362)) — Uncertainty: 0.1643 [Low]
+   9. Building 358 (Sherman Studio Art Center (0358)) — Uncertainty: 0.1444 [Low]
+  10. Building 60 (Orton Hall (0060)) — Uncertainty: 0.1379 [Low]

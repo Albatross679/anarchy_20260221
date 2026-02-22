@@ -1,0 +1,72 @@
+======================================================================
+MULTI-SIGNAL BUILDING SCORING REPORT
+======================================================================
+
+Weights: {
+  "residual": 0.3,
+  "weather_sensitivity": 0.2,
+  "baseline_load": 0.2,
+  "variability": 0.15,
+  "peer_comparison": 0.15
+}
+Utilities scored: ['ELECTRICITY', 'COOLING', 'GAS', 'HEAT', 'STEAM']
+Total buildings ranked: 275
+
+TOP 15 BUILDINGS FOR INVESTMENT:
+--------------------------------------------------
+   1. Building 186 (Norton House (0186)) — Score: 3.037, Area: 35831, Utilities: 2
+   2. Building 376 (Chilled Water Plant, East Regional (0376)) — Score: 2.250, Area: 34246, Utilities: 3
+   3. Building 29 (Women's Field House (0029)) — Score: 2.067, Area: 5417, Utilities: 2
+   4. Building 388 (Chiller Plant, South Campus Central (0388)) — Score: 1.893, Area: 83056, Utilities: 3
+   5. Building 882 (Morehouse Medical Plaza - Concourse (0882)) — Score: 1.874, Area: 41461, Utilities: 2
+   6. Building 230 (Field Hockey and Outdoor Tennis Office (0230)) — Score: 1.638, Area: 938, Utilities: 1
+   7. Building 390 (Water Treatment (0390)) — Score: 1.536, Area: 19518, Utilities: 2
+   8. Building 77 (Central Service Building (0077)) — Score: 1.029, Area: 15136, Utilities: 2
+   9. Building 153 (Poultry Breeding House 3 (0153)) — Score: 0.811, Area: 10229, Utilities: 2
+  10. Building 307 (Bevis Hall (0307)) — Score: 0.786, Area: 81611, Utilities: 2
+  11. Building 250 (Gerlach Hall (0250)) — Score: 0.784, Area: 69508, Utilities: 3
+  12. Building 178 (Waterman - South Storage 2 (0178)) — Score: 0.648, Area: 2753, Utilities: 2
+  13. Building 371 (Celeste Laboratory of Chemistry (0371)) — Score: 0.625, Area: 110310, Utilities: 5
+  14. Building 1056 (Coffey Rd Recreation Complex (1056)) — Score: 0.554, Area: 2481, Utilities: 1
+  15. Building 964 (Eleventh Ave, 45 W (0964)) — Score: 0.540, Area: 4525, Utilities: 2
+
+
+ELECTRICITY — Top 5:
+----------------------------------------
+  1. Bldg 376: composite=4.403  residual_z=12.08  weather_z=-2.91  baseline_z=1.01  var_z=-0.10  peer_z=7.83
+  2. Bldg 388: composite=3.561  residual_z=8.70  weather_z=-3.34  baseline_z=0.82  var_z=-0.10  peer_z=9.82
+  3. Bldg 29: composite=3.442  residual_z=2.89  weather_z=-2.55  baseline_z=12.75  var_z=0.20  peer_z=3.38
+  4. Bldg 69: composite=1.871  residual_z=3.80  weather_z=-0.33  baseline_z=0.84  var_z=-0.10  peer_z=4.30
+  5. Bldg 153: composite=1.719  residual_z=0.27  weather_z=8.88  baseline_z=-1.61  var_z=1.10  peer_z=0.12
+
+COOLING — Top 5:
+----------------------------------------
+  1. Bldg 376: composite=2.594  residual_z=7.69  weather_z=0.18  baseline_z=-0.89  var_z=-0.14  peer_z=3.00
+  2. Bldg 77: composite=2.209  residual_z=-0.12  weather_z=2.67  baseline_z=2.41  var_z=8.52  peer_z=-0.32
+  3. Bldg 388: composite=1.831  residual_z=4.85  weather_z=-3.34  baseline_z=0.25  var_z=-0.32  peer_z=6.94
+  4. Bldg 147: composite=0.928  residual_z=-0.15  weather_z=2.90  baseline_z=2.07  var_z=0.01  peer_z=-0.16
+  5. Bldg 95: composite=0.841  residual_z=-0.15  weather_z=0.35  baseline_z=2.31  var_z=1.72  peer_z=0.65
+
+GAS — Top 5:
+----------------------------------------
+  1. Bldg 882: composite=3.877  residual_z=9.93  weather_z=-0.31  baseline_z=0.98  var_z=-0.17  peer_z=5.26
+  2. Bldg 371: composite=1.849  residual_z=-0.26  weather_z=10.58  baseline_z=-0.64  var_z=-0.13  peer_z=-0.28
+  3. Bldg 307: composite=1.689  residual_z=2.21  weather_z=-0.26  baseline_z=0.75  var_z=-0.16  peer_z=6.36
+  4. Bldg 1106: composite=1.575  residual_z=4.11  weather_z=-0.21  baseline_z=0.50  var_z=-0.16  peer_z=2.05
+  5. Bldg 362: composite=1.181  residual_z=2.98  weather_z=0.04  baseline_z=0.44  var_z=-0.16  peer_z=1.43
+
+HEAT — Top 5:
+----------------------------------------
+  1. Bldg 186: composite=5.989  residual_z=0.16  weather_z=11.31  baseline_z=11.31  var_z=9.56  peer_z=-0.13
+  2. Bldg 390: composite=3.138  residual_z=8.48  weather_z=-0.10  baseline_z=-0.07  var_z=-0.22  peer_z=4.40
+  3. Bldg 250: composite=2.828  residual_z=5.99  weather_z=-0.10  baseline_z=-0.08  var_z=-0.30  peer_z=7.42
+  4. Bldg 7: composite=1.199  residual_z=2.62  weather_z=-0.10  baseline_z=-0.09  var_z=-0.28  peer_z=3.27
+  5. Bldg 386: composite=0.659  residual_z=0.15  weather_z=-0.11  baseline_z=-0.13  var_z=4.21  peer_z=0.21
+
+STEAM — Top 5:
+----------------------------------------
+  1. Bldg 371: composite=1.336  residual_z=3.61  weather_z=-0.42  baseline_z=-0.01  var_z=-0.41  peer_z=2.67
+  2. Bldg 53: composite=1.263  residual_z=3.27  weather_z=-0.34  baseline_z=0.27  var_z=-0.42  peer_z=2.40
+  3. Bldg 85: composite=0.545  residual_z=-0.32  weather_z=3.06  baseline_z=-1.19  var_z=0.66  peer_z=1.12
+  4. Bldg 41: composite=0.502  residual_z=-0.32  weather_z=3.64  baseline_z=-0.89  var_z=0.77  peer_z=-0.45
+  5. Bldg 276: composite=0.215  residual_z=-0.31  weather_z=0.45  baseline_z=-3.79  var_z=4.67  peer_z=1.85

@@ -153,28 +153,44 @@ CONTENT:
 
 ### 4.1 Data Cleaning (7-Step Pipeline)
 
-<!--
-CONTENT: For each step, describe what it does and how many rows it affects:
-1. drop_nan_simscode — Remove rows with null join keys
-2. exclude_utilities — Drop OIL28SEC (100% zeros)
-3. exclude_unmatched_buildings — Drop simscodes 8, 43, 93 (no metadata)
-4. apply_hard_caps — Sensor-fault outlier removal (per-utility thresholds)
-5. impute_short_gaps — Forward/backward fill gaps ≤8 hours
-6. drop_dead_meters — Remove meters that are 100% NaN
-7. drop_sparse_meters — Remove meters with >50% NaN
-- CleaningReport summary stats
--->
+Raw meter data is loaded from two CSV files (~1.5M rows across all utilities) and passed through a sequential cleaning pipeline implemented in `src/data_cleaner.py`. Each step feeds into the next; a `CleaningReport` dataclass tracks rows affected at every stage.
+
+**Raw input columns:** `meterId`, `siteName`, `simsCode`, `utility`, `readingTime`, `readingValue`, `readingUnits`, `readingWindowSum`, `readingWindowMin`, `readingWindowMax`, `readingWindowMean`, `readingWindowStandardDeviation`
+
+| Step | Function | Action | Detail |
+|------|----------|--------|--------|
+| 1 | `drop_nan_simscode` | Remove rows with null join keys | Drops rows where `simsCode` is NaN; converts `simsCode` from float → int → str |
+| 2 | `exclude_utilities` | Drop OIL28SEC | 100% zero readings — no signal; constant `EXCLUDED_UTILITIES = {"OIL28SEC"}` |
+| 3 | `exclude_unmatched_buildings` | Drop simsCodes 8, 43, 93 | These building codes have no matching metadata in SIMS; constant `EXCLUDED_SIMSCODES` |
+| 4 | `apply_hard_caps` | Sensor-fault outlier removal | Per-utility caps: ELECTRICITY/HEAT/COOLING 10,000; GAS 50,000; STEAM/STEAMRATE 1,000,000. Rows exceeding the cap are dropped |
+| 5 | `impute_short_gaps` | Forward/backward fill gaps ≤ 8 intervals | Groups by `(meterId, simsCode, utility)`, applies ffill then bfill with `limit=8`. Gaps longer than 8 intervals remain NaN |
+| 6 | `drop_dead_meters` | Remove 100% NaN meters | Meters where every `readingValue` is NaN are dropped entirely |
+| 7 | `drop_sparse_meters` | Remove meters > 50% NaN | Meters with NaN fraction above `SPARSE_THRESHOLD = 0.5` are dropped |
+
+**Cleaned output columns:** Same schema as raw input, with invalid rows removed, short gaps imputed, and unreliable meters excluded. Cleaned data can be cached to `data/cleaned_{utility}.csv` for reuse.
 
 ### 4.2 Feature Engineering
 
-<!--
-CONTENT:
-- Base features (14): 8 weather + 3 building (grossArea, building_age, floorsAboveGround) + 3 time (hour_of_day, day_of_week, is_weekend)
-- Extended features for tree models (25 total): + lag features (1h, 6h, 24h, 1w) + rolling mean/std (24h, 168h) + interactions (temp×area, humidity×area)
-- Normalization: energy_per_sqft = readingValue / grossArea
-- Target variable: energy_per_sqft
-- Z-score normalization for neural network inputs
--->
+After cleaning, the pipeline in `src/data_loader.py` joins, resamples, and enriches the data into a model-ready feature matrix:
+
+1. **Aggregate** — sum `readingValue` across all meters per `(simsCode, readingTime)` to get building-level consumption
+2. **Resample** — upsample hourly readings to 15-min intervals (value ÷ 4 per interval)
+3. **Join building metadata** — inner join on `simsCode == buildingNumber`, adding `grossArea`, `floorsAboveGround`, `building_age` (derived: `2025 − constructionDate.year`, NaN filled with median)
+4. **Join weather** — inner join on `readingTime` floored to the hour, adding 8 weather features
+5. **Time features** — extract `hour_of_day`, `minute_of_hour`, `day_of_week`, `is_weekend` from `readingTime`
+6. **Normalize target** — `energy_per_sqft = readingValue / grossArea`
+7. **Percentile clipping** — drop rows where `energy_per_sqft` falls outside the 1st–99th percentile (IQR-based outlier removal)
+
+**Extended tree-model features** (`src/feature_engineer.py`) add 12 engineered columns on top of the 14 base features:
+
+| Category | Features | Derivation |
+|----------|----------|------------|
+| Lag (4) | `energy_lag_4`, `_24`, `_96`, `_672` | Shifted `energy_per_sqft` by 1h/6h/24h/1w (×4 intervals/hr) per building |
+| Rolling (4) | `rolling_mean_96`, `rolling_std_96`, `rolling_mean_672`, `rolling_std_672` | 24h and 1-week rolling mean/std per building |
+| Interaction (2) | `temp_x_area`, `humidity_x_area` | `temperature_2m × grossArea`, `relative_humidity_2m × grossArea` |
+| Degree-day (2) | `hdd`, `cdd` | Heating/cooling degree values, base 65 °F |
+
+Rows with NaN from lag/rolling windows (start of each building's time series) are dropped. Neural network models use z-score normalization on the 14 base features; tree models consume the full 25-feature set raw.
 
 ### 4.3 Train/Test Split Strategy
 
@@ -191,14 +207,11 @@ CONTENT:
 
 ### 5.1 Core Concept: Expected vs. Actual Energy
 
-<!--
-CONTENT:
-- Models learn: f(weather, building_metadata, time) → expected_energy
-- Residual: δ_{b,t} = actual - predicted
-- Positive residual → over-consuming → investment candidate
-- Negative residual → efficient or underutilized
-- All models applied consistently across all buildings
--->
+All models learn the same function: **f(weather, building metadata, time) → expected energy per sqft**. The residual δ = actual − predicted isolates inefficiency: positive residuals flag buildings that consistently over-consume relative to what the model expects given weather and building characteristics.
+
+**Why tree-based models are our primary approach.** The dataset is modest in size (~1.5M rows across all utilities, ~60 days), purely tabular (weather numbers, building attributes, time features), and has no inherent spatial structure that would benefit from convolution or attention. Decision-tree ensembles (XGBoost, LightGBM, Random Forest) are a natural fit: they train in seconds, handle mixed feature types and missing values natively, require minimal preprocessing, and consistently outperform neural networks on tabular benchmarks. For 4 of 5 energy utilities, XGBoost achieved R² > 0.92 out of the box.
+
+**LSTM exception for gas.** Gas consumption proved difficult for tree models — XGBoost reached only R² = 0.654, the weakest of all utilities. Gas usage has strong temporal autocorrelation (heating cycles, thermostat schedules) that point-in-time tabular features struggle to capture. We trained an LSTM with a 12-hour sliding window (48 timesteps × 28 temporal features + 3 static building features) on the same gas data, which raised R² to **0.970** — a 48% improvement. The LSTM's ability to model sequential dependencies in gas consumption patterns made it the better choice for this utility, while tree models remain preferred for the other four.
 
 ### 5.2 Deep Learning Models
 
@@ -215,14 +228,20 @@ CONTENT:
 
 #### 5.2.2 LSTM (Long Short-Term Memory)
 
-<!--
-CONTENT:
-- Architecture: Dual-branch (temporal LSTM + static MLP) → fusion head
-- Temporal input: weather + time features per timestep
-- Static input: building metadata (constant per building)
-- LSTM: hidden=128, 2 layers, dropout=0.2
-- Training: 50 epochs, gradient clipping (max_norm=1.0)
--->
+**Target:** `energy_per_sqft` — gas consumption normalized by building gross area at each 15-min interval.
+
+**Inputs (dual-branch):**
+
+| Branch | Features | Shape |
+|--------|----------|-------|
+| **Temporal** (28 features per timestep) | 8 weather (`temperature_2m`, `relative_humidity_2m`, `dew_point_2m`, `direct_radiation`, `wind_speed_10m`, `cloud_cover`, `apparent_temperature`, `precipitation`), 4 time (`hour_of_day`, `minute_of_hour`, `day_of_week`, `is_weekend`), 4 energy lags (1h/6h/24h/1w), 4 rolling stats (24h/1w mean+std), 4 engineered (`temp_x_area`, `humidity_x_area`, `hdd`, `cdd`), 4 cross-utility (electricity concurrent/lag/rolling) | (B, 48, 28) |
+| **Static** (3 building constants) | `grossarea`, `floorsaboveground`, `building_age` | (B, 3) |
+
+**Architecture:** Temporal branch (3-layer LSTM, hidden=256) produces a 256-dim embedding; static branch (MLP 3→64→32) produces a 32-dim embedding; both are concatenated (288-dim) and passed through a GELU fusion head (128→64→1). Total: 1,393,185 parameters.
+
+**Training:** AdamW (lr=1e-3, weight_decay=1e-4), cosine LR scheduler, gradient clipping (max_norm=1.0), early stopping (patience=15), batch size 512, seq_length=48 (12h window), stride=4. Source: `lstm/config.py`, `lstm/model.py`.
+
+**Data:** Pre-engineered gas parquet (`data/tree_features_gas_cross.parquet`); 115 active buildings (31 always-off excluded); temporal split at 2025-10-01; z-score normalization fit on train.
 
 #### 5.2.3 Transformer (Encoder-Only)
 
@@ -247,13 +266,33 @@ CONTENT:
 
 #### 5.3.1 XGBoost
 
-<!--
-CONTENT:
-- 25 engineered features (base 15 + 4 lag + 4 rolling + 2 interactions)
-- Hyperparameters: n_estimators=1000, max_depth=7, lr=0.05, early_stop=50
-- SHAP explainability: feature importance, summary plots
-- Diagnostic plots: pred vs actual, residual distribution
--->
+**Target:** `energy_per_sqft` — utility consumption normalized by building gross area at each 15-minute interval, trained independently per utility.
+
+**Features (25 engineered):**
+
+| Category | Features | Count |
+|----------|----------|-------|
+| **Weather** | `temperature_2m`, `relative_humidity_2m`, `dew_point_2m`, `direct_radiation`, `wind_speed_10m`, `cloud_cover`, `apparent_temperature`, `precipitation` | 8 |
+| **Building** | `grossarea`, `floorsaboveground`, `building_age` | 3 |
+| **Time** | `hour_of_day`, `day_of_week`, `is_weekend` | 3 |
+| **Lag** | `energy_lag_4` (1h), `energy_lag_24` (6h), `energy_lag_96` (24h), `energy_lag_672` (1w) | 4 |
+| **Rolling** | `rolling_mean_96` (24h), `rolling_std_96` (24h), `rolling_mean_672` (1w), `rolling_std_672` (1w) | 4 |
+| **Interactions** | `temp_x_area`, `humidity_x_area` | 2 |
+| **Degree-days** | `hdd` (heating), `cdd` (cooling) — base 65 °F | 1 |
+
+**Per-Utility Performance (latest runs):**
+
+| Utility | R² | RMSE | MAE | Trees Used | Test Rows |
+|---------|-----|------|-----|------------|-----------|
+| Cooling | 0.9656 | 3.62e-4 | 7.1e-5 | 312 | 253,212 |
+| Steam | 0.9646 | 2.88e-3 | 8.3e-4 | 195 | 72,708 |
+| Electricity | 0.9537 | 5.6e-5 | 1.3e-5 | 170 | 781,716 |
+| Heat | 0.9202 | 3.3e-5 | 1.7e-5 | 106 | 380,968 |
+| Gas | 0.6539 | 9.5e-5 | 3.7e-5 | 166 | 432,280 |
+
+**Top predictive features** (by importance across utilities): `energy_lag_96` (24h lag), `energy_lag_4` (1h lag), `energy_lag_672` (1w lag), `rolling_mean_96`, `building_age`, `temperature_2m`.
+
+**Training:** `n_estimators=1000`, `max_depth=7`, `learning_rate=0.05`, early stopping (patience=50). SHAP explainability: feature importance bar plots, summary beeswarm plots, per-building waterfall plots. Source: `xgb/train.py`, `src/feature_engineer.py`.
 
 #### 5.3.2 LightGBM
 
@@ -507,12 +546,19 @@ CONTENT:
 
 ### 11.2 Checkpointing & Resume
 
-<!--
-CONTENT:
-- Neural models: model_best.pt, model_final.pt, periodic epoch checkpoints
-- Tree models: model_best.json / model_best.txt
-- Resume training from any checkpoint
--->
+Each training run saves its best model checkpoint under `output/{utility}_{model}_{timestamp}/checkpoints/`. Tree models are stored as JSON; the LSTM is stored as a PyTorch state dict.
+
+**Saved model artifacts (best checkpoint per utility):**
+
+| Utility | Model | Path | Size |
+|---------|-------|------|------|
+| Electricity | XGBoost | `output/electricity_xgboost_20260222_021830/checkpoints/model_best.json` | 204 KB |
+| Cooling | XGBoost | `output/cooling_xgboost_20260222_021836/checkpoints/model_best.json` | 392 KB |
+| Heat | XGBoost | `output/heat_xgboost_20260222_021837/checkpoints/model_best.json` | 100 KB |
+| Steam | XGBoost | `output/steam_xgboost_20260222_021840/checkpoints/model_best.json` | 832 KB |
+| Gas | LSTM | `output/gas_lstm_20260222_060624/checkpoints/model_best.pt` | 5.4 MB |
+
+All runs also save `config.json` (full hyperparameters), `metrics.json` (test-set performance), and `predictions.parquet` (per-row predictions) alongside the checkpoint for full reproducibility.
 
 ### 11.3 TensorBoard Logging
 
